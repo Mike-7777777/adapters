@@ -155,7 +155,7 @@ cd src/swegym
 # Generate SWE-Gym Lite (230 tasks, default)
 python run_adapter.py --dataset lite --task-dir ../../datasets/swegym-lite
 # or with uv
-uv run --no-project --with datasets --with swebench python run_adapter.py --dataset lite --task-dir ../../datasets/swegym-lite
+uv run python run_adapter.py --dataset lite --task-dir ../../datasets/swegym-lite
 
 # Generate SWE-Gym full (2438 tasks)
 python run_adapter.py --dataset full --task-dir ../../datasets/swegym
@@ -324,9 +324,9 @@ uvx --from harbor==0.23.0 harbor jobs start -p datasets/swegym-lite -a openhands
   ```bash
   uv tool install --python 3.12 harbor==0.23.0
   ```
-- **Python**: 3.10+ with generator dependencies
+- **Python**: 3.11+ with generator dependencies
   ```bash
-  pip install datasets swebench
+  pip install datasets "swebench>=4.1.0,<5"
   ```
 
 ### Optional
