@@ -11,8 +11,15 @@ Copyright (c) 2024 OpenAI). Departures, all deliberate:
   (hbp_data.py, sha256-checked) rather than from files in the task, since the
   dataset asks that its examples not be republished in plain text.
 
-The task reward is the length-adjusted score, unclipped: the paper clips the
-mean over tasks to [0, 1], not each task.
+REWARD_MODE selects what the verifier writes (the paper clips only the mean
+over tasks to [0, 1], never a single task):
+
+- unclipped (default): reward.txt holds the length-adjusted task score, which
+  can be below 0 or above 1; the benchmark score is the mean, clipped.
+- both: reward.json holds a clipped "reward" and the unclipped "score"; the
+  benchmark score is the mean of "score", clipped.
+- clipped: reward.txt holds the task score clipped to [0, 1]; its mean is not
+  comparable with the paper.
 """
 
 from __future__ import annotations
@@ -32,6 +39,7 @@ LOG_DIR = Path("/logs/verifier")
 LENGTH_CENTER = 2000.0
 PENALTY_PER_500_CHARS = 0.0147
 MAX_ATTEMPTS = 4
+REWARD_MODES = ("unclipped", "both", "clipped")
 
 GRADER_TEMPLATE = """
 Your job is to look at a conversation and a rubric item, and score the last turn (i.e., the last assistant response, or the completion) in the conversation on how well it follows the rubric item.
@@ -93,16 +101,32 @@ def parse_json_to_dict(text: str) -> dict:
         return {}
 
 
-def write_reward(value: float, details: dict) -> None:
+def write_reward(value: float, details: dict, mode: str) -> None:
     LOG_DIR.mkdir(parents=True, exist_ok=True)
-    (LOG_DIR / "reward.txt").write_text(f"{value}\n")
-    (LOG_DIR / "grading.json").write_text(json.dumps(details, indent=2))
+    clipped = min(1.0, max(0.0, value))
+    if mode == "both":
+        rewards = {"reward": clipped, "score": value}
+        (LOG_DIR / "reward.json").write_text(json.dumps(rewards))
+    else:
+        (LOG_DIR / "reward.txt").write_text(
+            f"{clipped if mode == 'clipped' else value}\n"
+        )
+    (LOG_DIR / "grading.json").write_text(
+        json.dumps({"reward_mode": mode, **details}, indent=2)
+    )
 
 
 def main() -> int:
+    mode = os.environ.get("REWARD_MODE") or "unclipped"
+    if mode not in REWARD_MODES:
+        print(
+            f"REWARD_MODE must be one of {', '.join(REWARD_MODES)}, got {mode!r}",
+            file=sys.stderr,
+        )
+        return 1
     response = RESPONSE_PATH.read_text() if RESPONSE_PATH.is_file() else ""
     if not response.strip():
-        write_reward(0.0, {"error": "no response at /workspace/response.txt"})
+        write_reward(0.0, {"error": "no response at /workspace/response.txt"}, mode)
         return 0
 
     from openai import OpenAI
@@ -166,6 +190,7 @@ def main() -> int:
             "grader_model": model,
             "items": graded,
         },
+        mode,
     )
     return 0
 

@@ -9,7 +9,7 @@ in the Harbor format at the configured output directory.
 import argparse
 from pathlib import Path
 
-from .adapter import HealthBenchProfessionalAdapter
+from .adapter import REWARD_MODES, HealthBenchProfessionalAdapter
 
 # Default output dir: <repo>/datasets/<adapter_id>
 DEFAULT_OUTPUT_DIR = (
@@ -53,6 +53,13 @@ def main() -> None:
         default=None,
         help="Directory of <task_id>.txt oracle replies for solution/solve.sh",
     )
+    parser.add_argument(
+        "--reward-mode",
+        choices=REWARD_MODES,
+        default="unclipped",
+        help="Default REWARD_MODE written into task.toml (see tests/grader.py); "
+        "HBP_REWARD_MODE overrides it at run time",
+    )
     args = parser.parse_args()
 
     adapter = HealthBenchProfessionalAdapter(
@@ -62,6 +69,7 @@ def main() -> None:
         task_ids=args.task_ids,
         source=args.source,
         oracle_dir=args.oracle_dir,
+        reward_mode=args.reward_mode,
     )
 
     adapter.run()

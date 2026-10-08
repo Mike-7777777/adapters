@@ -54,15 +54,30 @@ uv run harbor run -p datasets/healthbench-professional -a <agent> -m "<model>"
 
 One full grading pass over 525 replies is 1135 judge calls.
 
+## Reward
+
+A task score can be below 0 (negative rubric items, long replies) or above 1 (the length adjustment adds a little for replies under 2000 characters). The paper clips only the mean over tasks to [0, 1]; clipping each task first moves the physician mean from 0.429 to 0.490.
+
+`REWARD_MODE` selects what the verifier writes. The default is set at generation time with `--reward-mode`, and `HBP_REWARD_MODE` overrides it at run time:
+
+| Mode | Verifier output | Benchmark score |
+|---|---|---|
+| `unclipped` (default) | `reward.txt`: the task score | mean of `reward`, clipped to [0, 1] |
+| `both` | `reward.json`: `reward` clipped to [0, 1], `score` unclipped | mean of `score`, clipped to [0, 1] |
+| `clipped` | `reward.txt`: the task score clipped to [0, 1] | mean of `reward`; not comparable with the paper |
+
+The default follows merged adapters whose original metric leaves [0, 1]: `sldbench` writes R² clipped to [-1, 1], and `mlgym-bench` writes the improvement over a baseline without bounds. `both` follows `gdb` and `widesearch`, which report several metrics in `reward.json`; Harbor averages each key separately.
+
 ## Local checks so far
 
 - Physician reference replies, all 525, graded with this grader's prompt and scoring (judge `gpt-5.4`, reasoning low): length-adjusted mean 0.429; the paper reports 0.437 (section 5.1).
 - Harbor 0.24.0, 3 tasks: every per-item verdict from `test.sh` matched a direct call to the simple-evals code.
 - Pointer layout, 11 tasks with the oracle agent: the 10 tasks with a rubric-targeted oracle reply scored 1.0 before length adjustment; a scan of the generated task directories found no dataset text.
+- Reward modes in Harbor 0.24.0: `unclipped` gives one `mean`; `both` gives separate means for `reward` and `score`; `HBP_REWARD_MODE=both` overrides a task generated as `unclipped`.
 
 ## Open questions
 
-1. **Reward range.** Task scores can fall below 0 (negative items, long replies) or exceed 1 (length bonus for short replies), and the paper clips only the final mean. Clipping each task first changes the physician mean from 0.429 to 0.490. The guide asks for rewards in [0, 1] and for the original metric; options are an unclipped reward, or `reward.json` with a clipped `reward` plus an unclipped `score`.
+1. **Reward range.** The default is the unclipped task score (see [Reward](#reward)). If you prefer rewards in [0, 1], `both` keeps the paper-comparable score next to a clipped reward; `clipped` alone is also available but drifts from the paper.
 2. **Oracle solutions.** Physician replies score 0.43 on average, so oracle replies are written against each rubric with AI assistance and re-graded. Where should they live, given that they reveal what each rubric asks for?
 3. **Parity.** Proposed: Scenario 2, a claude-code sampler added to a fork of simple-evals, the same judge on both sides, a 150-task subset stratified by use case and type.
 

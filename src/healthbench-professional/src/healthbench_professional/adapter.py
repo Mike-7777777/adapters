@@ -19,6 +19,7 @@ from . import hbp_data
 PACKAGE_DIR = Path(__file__).resolve().parent
 TEMPLATE_DIR = PACKAGE_DIR / "task-template"
 DATA_MODULE = PACKAGE_DIR / "hbp_data.py"
+REWARD_MODES = ("unclipped", "both", "clipped")
 NO_ORACLE = 'echo "no oracle reply was generated for this task" >&2\nexit 1'
 
 
@@ -37,8 +38,14 @@ class HealthBenchProfessionalAdapter:
         task_ids: list[str] | None = None,
         source: str | None = None,
         oracle_dir: Path | None = None,
+        reward_mode: str = "unclipped",
         **kwargs,
     ):
+        if reward_mode not in REWARD_MODES:
+            raise ValueError(
+                f"reward_mode must be one of {REWARD_MODES}, got {reward_mode!r}"
+            )
+        self.reward_mode = reward_mode
         self.output_dir = Path(output_dir)
         self.limit = limit
         self.overwrite = overwrite
@@ -76,6 +83,7 @@ class HealthBenchProfessionalAdapter:
             "type": row["type"],
             "specialty": row["specialty"],
             "difficulty": "hard" if row["difficulty"] == "difficult" else "medium",
+            "reward_mode": self.reward_mode,
         }
         for name in ("task.toml", "environment/Dockerfile"):
             path = task_dir / name

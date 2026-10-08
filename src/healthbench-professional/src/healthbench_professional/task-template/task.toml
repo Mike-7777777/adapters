@@ -17,6 +17,7 @@ OPENAI_API_KEY = "${OPENAI_API_KEY}"
 OPENAI_BASE_URL = "${OPENAI_BASE_URL:-https://api.openai.com/v1}"
 GRADER_MODEL = "${GRADER_MODEL:-gpt-5.4-2026-03-05}"
 HF_ENDPOINT = "${HF_ENDPOINT:-https://huggingface.co}"
+REWARD_MODE = "${HBP_REWARD_MODE:-{reward_mode}}"
 
 [agent]
 timeout_sec = 900.0
