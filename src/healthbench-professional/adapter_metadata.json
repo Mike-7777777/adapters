@@ -1,0 +1,32 @@
+[
+  {
+    "adapter_name": "healthbench-professional",
+    "adapter_builders": [
+      "Mike-7777777 (41225783+Mike-7777777@users.noreply.github.com)"
+    ],
+    "original_benchmark": [
+      {
+        "split": "test",
+        "size": 525,
+        "harness": "llm",
+        "supported_agents": null,
+        "adaptable": true,
+        "notes": "HealthBench Professional (OpenAI, arXiv 2604.27470): 525 real clinician conversations graded against physician-written rubric items by an LLM judge (gpt-5.4-2026-03-05, reasoning low)."
+      }
+    ],
+    "harbor_adapter": [
+      {
+        "split": "full",
+        "adapted_benchmark_size": 525,
+        "parity_benchmark_size": null,
+        "parity_sampling_rate": null,
+        "registry_benchmark_size": null,
+        "added_agents": [],
+        "parity_matching_agents": [],
+        "parity_unmatching_agents": null,
+        "parity_costs": null,
+        "notes": "Work in progress: parity plan, oracle solutions and reward range are pending agreement with the Harbor team."
+      }
+    ]
+  }
+]

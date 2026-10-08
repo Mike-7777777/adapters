@@ -1,0 +1,27 @@
+schema_version = "1.0"
+
+[task]
+name = "openai/healthbench-professional__{task_id}"
+authors = [{ name = "OpenAI", email = "" }]
+keywords = ["healthbench", "medical", "clinician", "rubric", "llm-judge", "{use_case}", "{type}", "{specialty}"]
+
+[metadata]
+difficulty = "{difficulty}"
+category = "medical"
+
+[verifier]
+timeout_sec = 900.0
+
+[verifier.env]
+OPENAI_API_KEY = "${OPENAI_API_KEY}"
+OPENAI_BASE_URL = "${OPENAI_BASE_URL:-https://api.openai.com/v1}"
+GRADER_MODEL = "${GRADER_MODEL:-gpt-5.4-2026-03-05}"
+HF_ENDPOINT = "${HF_ENDPOINT:-https://huggingface.co}"
+
+[agent]
+timeout_sec = 900.0
+
+[environment]
+build_timeout_sec = 600.0
+cpus = 1
+memory_mb = 2048
