@@ -84,3 +84,24 @@ def test_adapter_writes_the_default_mode_into_task_toml(tmp_path, monkeypatch, m
 def test_adapter_rejects_an_unknown_mode(tmp_path):
     with pytest.raises(ValueError, match="reward_mode"):
         adapter_module.HealthBenchProfessionalAdapter(tmp_path, reward_mode="clip")
+
+
+def test_generated_task_holds_no_record_text(tmp_path, monkeypatch):
+    row = fake_row("abc") | {
+        "conversation": {
+            "messages": [{"role": "user", "content": "CONVERSATION-TEXT-SENTINEL"}]
+        },
+        "rubric_items": [{"criterion_text": "RUBRIC-TEXT-SENTINEL", "points": 5}],
+        "physician_response": "PHYSICIAN-TEXT-SENTINEL",
+    }
+    monkeypatch.setattr(adapter_module.hbp_data, "load_rows", lambda source=None: [row])
+    adapter_module.HealthBenchProfessionalAdapter(tmp_path).run()
+    files = [f for f in (tmp_path / "abc").rglob("*") if f.is_file()]
+    blob = "\n".join(f.read_text() for f in files)
+    for sentinel in (
+        "CONVERSATION-TEXT-SENTINEL",
+        "RUBRIC-TEXT-SENTINEL",
+        "PHYSICIAN-TEXT-SENTINEL",
+    ):
+        assert sentinel not in blob
+    assert "canary" in (tmp_path / "abc" / "instruction.md").read_text()
