@@ -532,15 +532,15 @@ class AiderPolyglotAdapter:
         """
         meta_dir = tests_dir / ".meta"
         if not meta_dir.exists():
-            print(f"[adapter] No .meta at {meta_dir}, skipping oracle files.")
-            return
+            raise ValueError(
+                f"No .meta at {meta_dir}; cannot build the oracle solution"
+            )
 
         examples = self._collect_examples(task)
         if not examples:
-            print(
-                f"[adapter] No example files declared/found for {task.task_id}, skipping oracle files."
+            raise ValueError(
+                f"No example files declared or found for {task.task_id}; cannot build the oracle solution"
             )
-            return
 
         mapping: List[tuple[Path, Path]] = []
         for src_abs in examples:
@@ -550,6 +550,14 @@ class AiderPolyglotAdapter:
         oracle_dir = solution_dir / "oracle"
         files_dir = oracle_dir / "files"
         files_dir.mkdir(parents=True, exist_ok=True)
+        names = [src_abs.name for src_abs, _dst_rel in mapping]
+        duplicates = sorted({n for n in names if names.count(n) > 1})
+        if duplicates:
+            # The manifest is keyed by basename, so two example files with the same
+            # name would overwrite each other.
+            raise ValueError(
+                f"Example files share a basename in {task.task_id}: {duplicates}"
+            )
         for src_abs, _dst_rel in mapping:
             shutil.copy2(src_abs, files_dir / src_abs.name)
         self._write_manifest(mapping, oracle_dir / "manifest.txt")
