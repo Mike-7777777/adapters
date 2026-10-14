@@ -149,7 +149,7 @@ For this adapter, parity was validated through a two-step transitive equivalence
 
 - The upstream Polyglot repository pulls substantial language toolchains (Gradle, npm, Cargo). Harbor jobs may need >12 GB of memory and can exceed 15 minutes for larger Java/C++ builds.
 - Rust parity adds crates (`regex`, `thiserror`, `anyhow`) opportunistically to smooth compilation. This diverges slightly from stock Exercism instructions but keeps tests stable.
-- Oracle files are the upstream exemplar implementations. They live only under `solution/` and `tests/.meta/`; neither is mounted during the agent phase.
+- Oracle files are the upstream exemplar implementations. They live only under `solution/` and `tests/.meta/`, which Harbor uploads for the oracle run and for verification respectively, never during the agent phase.
 - Some exercises lack explicit tests in `.meta/config.json`; the adapter backfills them by scanning upstream directories, which may surface flaky behaviors if Exercism upstream changes.
 
 ## Installation / Prerequisites
