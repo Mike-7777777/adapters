@@ -115,10 +115,10 @@ class GAIAAdapter:
         solve_path.write_text(solve_sh)
         solve_path.chmod(0o755)
 
-        # 5. Copy test.sh and create expected_answer.txt
-        shutil.copy2(
-            self.template_dir / "tests" / "test.sh", task_dir / "tests" / "test.sh"
-        )
+        # 5. Copy test.sh, the vendored official scorer it runs, and create
+        # expected_answer.txt
+        for name in ("test.sh", "gaia_scorer.py"):
+            shutil.copy2(self.template_dir / "tests" / name, task_dir / "tests" / name)
         (task_dir / "tests" / "test.sh").chmod(0o755)
 
         # Write expected answer for test verification
