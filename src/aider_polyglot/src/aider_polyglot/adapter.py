@@ -1,11 +1,7 @@
 from __future__ import annotations
 
 import json
-import os
 import shutil
-import subprocess
-import tarfile
-import tempfile
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
@@ -29,10 +25,6 @@ else:
         get_test_command_with_test_dir,
         load_template,
     )
-
-# Default secret for payload encryption.
-# Override globally by exporting ORACLE_SECRET before generating tasks.
-DEFAULT_ORACLE_SECRET = os.environ.get("ORACLE_SECRET", "tb-secret-please-change")
 
 
 class AiderPolyglotTask:
@@ -444,7 +436,7 @@ class AiderPolyglotAdapter:
         script.write_text(content, encoding="utf-8")
         script.chmod(0o755)
 
-    # ---------- Oracle (encrypted solution) -----------------------------------
+    # ---------- Oracle (reference solution) -----------------------------------
 
     def _create_solution_script(
         self,
@@ -453,19 +445,17 @@ class AiderPolyglotAdapter:
         workspace_dir: Path,
         tests_dir: Path,
     ) -> None:
-        script_template = load_template("solve.sh", self.templates_dir)
-        script_text = script_template.replace(
-            "__DEFAULT_ORACLE_SECRET__", DEFAULT_ORACLE_SECRET
-        )
         script_path = solution_dir / "solve.sh"
-        script_path.write_text(script_text, encoding="utf-8")
+        script_path.write_text(
+            load_template("solve.sh", self.templates_dir), encoding="utf-8"
+        )
         script_path.chmod(0o755)
 
-        self._embed_oracle_payload(
+        self._write_oracle_files(
             task=task,
             workspace_dir=workspace_dir,
+            solution_dir=solution_dir,
             tests_dir=tests_dir,
-            secret=DEFAULT_ORACLE_SECRET,
         )
 
     def _collect_examples(self, task: AiderPolyglotTask) -> List[Path]:
@@ -528,49 +518,27 @@ class AiderPolyglotAdapter:
         lines = [f"files/{src.name}|{dst.as_posix()}" for src, dst in mapping]
         out_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
-    def _create_payload_tar(
-        self, mapping: List[tuple[Path, Path]], tar_out: Path
+    def _write_oracle_files(
+        self,
+        task: AiderPolyglotTask,
+        workspace_dir: Path,
+        solution_dir: Path,
+        tests_dir: Path,
     ) -> None:
-        payload_root = "payload"
-        files_root = f"{payload_root}/files"
+        """Write the reference files and their destinations under solution/oracle/.
 
-        with tarfile.open(tar_out, "w") as tf:
-            for src_abs, _dst_rel in mapping:
-                tf.add(src_abs, arcname=f"{files_root}/{src_abs.name}")
-
-            with tempfile.TemporaryDirectory() as td:
-                man = Path(td) / "manifest.txt"
-                self._write_manifest(mapping, man)
-                tf.add(man, arcname=f"{payload_root}/manifest.txt")
-
-    def _openssl_encrypt(self, in_path: Path, out_path: Path, password: str) -> None:
-        cmd = [
-            "openssl",
-            "enc",
-            "-aes-256-cbc",
-            "-pbkdf2",
-            "-salt",
-            "-pass",
-            f"pass:{password}",
-            "-in",
-            str(in_path),
-            "-out",
-            str(out_path),
-        ]
-        subprocess.run(cmd, check=True)
-
-    def _embed_oracle_payload(
-        self, task: AiderPolyglotTask, workspace_dir: Path, tests_dir: Path, secret: str
-    ) -> None:
+        solution/ is uploaded only for the oracle run, so nothing here reaches the
+        agent's image. The same reference files are already in tests/.meta.
+        """
         meta_dir = tests_dir / ".meta"
         if not meta_dir.exists():
-            print(f"[adapter] No .meta at {meta_dir}, skipping oracle payload.")
+            print(f"[adapter] No .meta at {meta_dir}, skipping oracle files.")
             return
 
         examples = self._collect_examples(task)
         if not examples:
             print(
-                f"[adapter] No example files declared/found for {task.task_id}, skipping oracle payload."
+                f"[adapter] No example files declared/found for {task.task_id}, skipping oracle files."
             )
             return
 
@@ -579,16 +547,13 @@ class AiderPolyglotAdapter:
             dst_rel = self._pick_dest_for_example(src_abs, workspace_dir, task)
             mapping.append((src_abs, dst_rel))
 
-        out_dir = workspace_dir / ".oracle"
-        out_dir.mkdir(parents=True, exist_ok=True)
-
-        with tempfile.TemporaryDirectory() as td:
-            tar_tmp = Path(td) / "payload.tar"
-            self._create_payload_tar(mapping, tar_tmp)
-
-            enc_out = out_dir / "solution.enc"
-            self._openssl_encrypt(tar_tmp, enc_out, secret)
-            print(f"[adapter] Encrypted oracle payload -> {enc_out}")
+        oracle_dir = solution_dir / "oracle"
+        files_dir = oracle_dir / "files"
+        files_dir.mkdir(parents=True, exist_ok=True)
+        for src_abs, _dst_rel in mapping:
+            shutil.copy2(src_abs, files_dir / src_abs.name)
+        self._write_manifest(mapping, oracle_dir / "manifest.txt")
+        print(f"[adapter] Oracle files -> {oracle_dir}")
 
     def _create_dockerfile(
         self, task: AiderPolyglotTask, environment_dir: Path
