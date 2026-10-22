@@ -220,6 +220,7 @@ class AiderPolyglotAdapter:
             tests_dir.mkdir(parents=True, exist_ok=True)
 
             self._setup_workspace(task, workspace_dir)
+            self._write_verifier_workspace(task, workspace_dir, tests_dir)
             self._setup_test_files(task, tests_dir)
 
             self._create_instruction(task, output_dir)
@@ -387,6 +388,25 @@ class AiderPolyglotAdapter:
                     if p.name in solution_basenames:
                         continue
                     shutil.copy2(p, dst / p.name)
+
+    def _write_verifier_workspace(
+        self, task: AiderPolyglotTask, workspace_dir: Path, tests_dir: Path
+    ) -> None:
+        """Give the verifier its own copy of every workspace file but the solution.
+
+        The agent can edit anything in /app, including the build and test setup
+        (CMakeLists.txt, package.json, build.gradle, Cargo.toml, go.mod) that
+        decides whether the tests run. test.sh resets /app to tests/workspace/
+        and keeps only the files in tests/solution_files.txt from the agent, the
+        files aider's harness lets the model edit.
+        """
+        verifier_workspace = tests_dir / "workspace"
+        shutil.copytree(workspace_dir, verifier_workspace)
+        for rel in task.solution_files:
+            (verifier_workspace / rel).unlink(missing_ok=True)
+        (tests_dir / "solution_files.txt").write_text(
+            "".join(f"{rel}\n" for rel in task.solution_files), encoding="utf-8"
+        )
 
     def _create_instruction(self, task: AiderPolyglotTask, output_dir: Path) -> None:
         instruction_text = task.instructions.strip()

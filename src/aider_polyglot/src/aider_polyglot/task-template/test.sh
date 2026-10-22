@@ -17,6 +17,22 @@ if [ ! -d "$TEST_DIR" ]; then
     exit 0
 fi
 
+# --- Reset /app to the verifier's copy --------------------------------------
+# The agent can edit anything in /app, including the build and test setup that
+# decides whether the tests run. Keep only the declared solution files from the
+# agent; restore every other file from $TEST_DIR/workspace and drop added files.
+keep_dir="$(mktemp -d)"
+while IFS= read -r rel; do
+    if [ -n "$rel" ] && [ -f "/app/$rel" ]; then
+        mkdir -p "$keep_dir/$(dirname "$rel")"
+        cp "/app/$rel" "$keep_dir/$rel"
+    fi
+done < "$TEST_DIR/solution_files.txt"
+find /app -mindepth 1 -maxdepth 1 -exec rm -rf {{}} +
+cp -a "$TEST_DIR/workspace/." /app/
+cp -a "$keep_dir/." /app/
+rm -rf "$keep_dir"
+
 {dependency_install}
 
 # --- Java setup -------------------------------------------------------------

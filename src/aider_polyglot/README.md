@@ -38,6 +38,8 @@ aider_polyglot/
 │   └── tests/
 │       ├── test.sh               # Language-specific verifier entry point
 │       ├── .meta/                # Exercism metadata and example implementations
+│       ├── workspace/            # Verifier's copy of the workspace minus the solution files
+│       ├── solution_files.txt    # Files the verifier keeps from the agent's /app
 │       └── ...                   # Upstream tests, helpers, fixtures
 ```
 
@@ -151,6 +153,7 @@ For this adapter, parity was validated through a two-step transitive equivalence
 - Rust parity adds crates (`regex`, `thiserror`, `anyhow`) opportunistically to smooth compilation. This diverges slightly from stock Exercism instructions but keeps tests stable.
 - Oracle payloads embed upstream exemplar implementations; ensure `ORACLE_SECRET` is rotated for production-grade deployments.
 - Some exercises lack explicit tests in `.meta/config.json`; the adapter backfills them by scanning upstream directories, which may surface flaky behaviors if Exercism upstream changes.
+- The verifier keeps only the solution files declared in `.meta/config.json` from the agent's `/app`. Before running the tests it resets every other file to `tests/workspace/` and deletes files the agent added, so edits to `CMakeLists.txt`, `package.json`, `build.gradle`, `Cargo.toml`, `go.mod`, or added files such as `conftest.py` or extra `_test.go` files, cannot change whether the tests run. aider's harness enforces the same boundary by letting the model edit only those files.
 
 ## Installation / Prerequisites
 
