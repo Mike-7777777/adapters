@@ -33,7 +33,10 @@ def test_task_config_names_the_dockerfile_image(
 
     task_dir = converter.generate_task(INSTANCE_ID, INSTANCE_ID.lower())
 
-    environment = tomllib.loads((task_dir / "task.toml").read_text())["environment"]
+    config = tomllib.loads((task_dir / "task.toml").read_text())
+    assert config["task"]["name"] == f"swe-gym/swe-gym__{INSTANCE_ID}"
+    assert config["task"]["authors"][0]["name"] == "Jiayi Pan"
+    environment = config["environment"]
     assert environment["docker_image"] == IMAGE
     assert environment["workdir"] == "/testbed"
     dockerfile = (task_dir / "environment" / "Dockerfile").read_text()

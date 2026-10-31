@@ -181,6 +181,7 @@ class SWEGymToHarbor:
         cfg_tpl = read_text(self.t_config)
         cfg = render_literal(
             cfg_tpl,
+            instance_id=rec.instance_id,
             difficulty=rec.difficulty or "hard",
             max_timeout=str(int(self.max_timeout)),
             docker_image=docker_image,

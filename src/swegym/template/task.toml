@@ -1,3 +1,15 @@
+[task]
+name = "swe-gym/swe-gym__{instance_id}"
+authors = [
+    { name = "Jiayi Pan", email = "jypan@berkeley.edu" },
+    { name = "Xingyao Wang" },
+    { name = "Graham Neubig" },
+    { name = "Navdeep Jaitly" },
+    { name = "Heng Ji" },
+    { name = "Alane Suhr" },
+    { name = "Yizhe Zhang" },
+]
+
 [metadata]
 benchmark = "SWE-Gym"
 benchmark_url = "https://github.com/SWE-Gym/SWE-Gym"
