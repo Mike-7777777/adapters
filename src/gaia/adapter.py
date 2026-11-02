@@ -95,8 +95,9 @@ class GAIAAdapter:
         )
         (task_dir / "instruction.md").write_text(instruction)
 
-        # 3. Generate task.toml with level metadata
+        # 3. Generate task.toml with the task name and level metadata
         task_toml = (self.template_dir / "task.toml").read_text()
+        task_toml = task_toml.replace("{task_id}", task.task_id.lower())
         task_toml = task_toml.replace(
             'difficulty = "medium"',
             f'difficulty = "{self._level_to_difficulty(task.level)}"',

@@ -4,6 +4,7 @@ import hashlib
 import importlib.util
 import subprocess
 import sys
+import tomllib
 from pathlib import Path
 
 import pytest
@@ -140,3 +141,10 @@ def test_oracle_solution_is_rewarded(tmp_path: Path, truth: str) -> None:
     run_in_sandbox(task_dir / "solution" / "solve.sh", root)
     run_in_sandbox(task_dir / "tests" / "test.sh", root)
     assert reward(root) == "1"
+
+
+def test_task_toml_names_the_task_and_credits_the_gaia_authors(tmp_path: Path) -> None:
+    task_dir, _ = render_task(tmp_path, "Paris")
+    task = tomllib.loads((task_dir / "task.toml").read_text())["task"]
+    assert task["name"] == "gaia-benchmark/gaia__stub"
+    assert task["authors"][0]["name"] == "Grégoire Mialon"
