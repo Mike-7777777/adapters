@@ -56,7 +56,7 @@ def main() -> None:
     parser.add_argument(
         "--reward-mode",
         choices=REWARD_MODES,
-        default="unclipped",
+        default="both",
         help="Default REWARD_MODE written into task.toml (see tests/grader.py); "
         "HBP_REWARD_MODE overrides it at run time",
     )

@@ -81,6 +81,24 @@ def test_adapter_writes_the_default_mode_into_task_toml(tmp_path, monkeypatch, m
     assert f'REWARD_MODE = "${{HBP_REWARD_MODE:-{mode}}}"' in toml
 
 
+def test_adapter_defaults_to_both(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        adapter_module.hbp_data, "load_rows", lambda source=None: [fake_row("abc")]
+    )
+    adapter_module.HealthBenchProfessionalAdapter(tmp_path).run()
+    toml = (tmp_path / "abc" / "task.toml").read_text()
+    assert 'REWARD_MODE = "${HBP_REWARD_MODE:-both}"' in toml
+
+
+def test_grader_defaults_to_both(log_dir, monkeypatch):
+    monkeypatch.delenv("REWARD_MODE", raising=False)
+    assert grader.main() == 0
+    assert json.loads((log_dir / "reward.json").read_text()) == {
+        "reward": 0.0,
+        "score": 0.0,
+    }
+
+
 def test_adapter_rejects_an_unknown_mode(tmp_path):
     with pytest.raises(ValueError, match="reward_mode"):
         adapter_module.HealthBenchProfessionalAdapter(tmp_path, reward_mode="clip")

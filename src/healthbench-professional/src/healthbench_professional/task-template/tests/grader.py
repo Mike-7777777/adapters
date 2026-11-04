@@ -14,10 +14,10 @@ Copyright (c) 2024 OpenAI). Departures, all deliberate:
 REWARD_MODE selects what the verifier writes (the paper clips only the mean
 over tasks to [0, 1], never a single task):
 
-- unclipped (default): reward.txt holds the length-adjusted task score, which
+- unclipped: reward.txt holds the length-adjusted task score, which
   can be below 0 or above 1; the benchmark score is the mean, clipped.
-- both: reward.json holds a clipped "reward" and the unclipped "score"; the
-  benchmark score is the mean of "score", clipped.
+- both (default): reward.json holds a clipped "reward" and the unclipped
+  "score"; the benchmark score is the mean of "score", clipped.
 - clipped: reward.txt holds the task score clipped to [0, 1]; its mean is not
   comparable with the paper.
 """
@@ -117,7 +117,7 @@ def write_reward(value: float, details: dict, mode: str) -> None:
 
 
 def main() -> int:
-    mode = os.environ.get("REWARD_MODE") or "unclipped"
+    mode = os.environ.get("REWARD_MODE") or "both"
     if mode not in REWARD_MODES:
         print(
             f"REWARD_MODE must be one of {', '.join(REWARD_MODES)}, got {mode!r}",

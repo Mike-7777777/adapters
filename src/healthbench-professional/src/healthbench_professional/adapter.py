@@ -38,7 +38,7 @@ class HealthBenchProfessionalAdapter:
         task_ids: list[str] | None = None,
         source: str | None = None,
         oracle_dir: Path | None = None,
-        reward_mode: str = "unclipped",
+        reward_mode: str = "both",
         **kwargs,
     ):
         if reward_mode not in REWARD_MODES:

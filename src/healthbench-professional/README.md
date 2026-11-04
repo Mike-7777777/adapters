@@ -84,7 +84,7 @@ Checks so far:
 - Physician reference replies, all 525, graded with this grader's prompt and scoring (judge `gpt-5.4`, reasoning low): length-adjusted mean 0.429; the paper reports 0.437 (section 5.1).
 - Harbor 0.24.0, 3 tasks: every per-item verdict from `test.sh` matched a direct call to the simple-evals code.
 - Pointer layout, 11 tasks with the oracle agent: the 10 tasks with a rubric-targeted oracle reply scored 1.0 before length adjustment; the generated task directories contain no dataset text.
-- Reward modes in Harbor 0.24.0: `unclipped` gives one `mean`; `both` gives separate means for `reward` and `score`; `HBP_REWARD_MODE=both` overrides a task generated as `unclipped`.
+- Reward modes in Harbor 0.24.0: `unclipped` gives one `mean`; `both` gives separate means for `reward` and `score`; `HBP_REWARD_MODE` overrides the mode a task was generated with.
 
 ## Notes & Caveats
 
@@ -92,13 +92,13 @@ Checks so far:
 
 | Mode | Verifier output | Benchmark score |
 |---|---|---|
-| `unclipped` (default) | `reward.txt`: the task score | mean of `reward`, clipped to [0, 1] |
-| `both` | `reward.json`: `reward` clipped to [0, 1], `score` unclipped | mean of `score`, clipped to [0, 1] |
+| `unclipped` | `reward.txt`: the task score | mean of `reward`, clipped to [0, 1] |
+| `both` (default) | `reward.json`: `reward` clipped to [0, 1], `score` unclipped | mean of `score`, clipped to [0, 1] |
 | `clipped` | `reward.txt`: the task score clipped to [0, 1] | mean of `reward`; not comparable with the paper |
 
-The default follows merged adapters whose original metric leaves [0, 1]: `sldbench` writes R² clipped to [-1, 1], and `mlgym-bench` writes the improvement over a baseline without bounds. `both` follows `gdb` and `widesearch`, which report several metrics in `reward.json`; Harbor averages each key separately.
+The default `both` keeps `reward` in [0, 1], as the guide requires of `test.sh`, and keeps the unclipped `score` that the paper's metric is computed from; Harbor averages each `reward.json` key separately. `unclipped` follows merged adapters whose original metric leaves [0, 1] (`sldbench`, `mlgym-bench`).
 
-**Oracle solutions.** Physician replies score 0.43 on average, so they cannot serve as the oracle. Oracle replies are written against each rubric with AI assistance and re-graded; 34 of 34 sampled tasks reached full score. Where they should live is an open question, since they reveal what each rubric asks for.
+**Oracle solutions.** Physician replies score 0.43 on average, so they cannot serve as the oracle. Oracle replies are written against each rubric with AI assistance and re-graded; 34 of 34 sampled tasks reached full score. They are passed in with `--oracle-dir` and embedded in each generated `solution/solve.sh`, which the agent never sees; they are AI-written text, not dataset records. The full set is uploaded with the parity results.
 
 **Judge snapshot.** Results are only comparable with the paper under `gpt-5.4-2026-03-05`. The local checks above used a third-party endpoint that reports the model as `gpt-5.4` without a snapshot.
 
