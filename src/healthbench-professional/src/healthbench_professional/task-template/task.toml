@@ -2,7 +2,7 @@ schema_version = "1.0"
 
 [task]
 name = "openai/healthbench-professional__{task_id}"
-authors = [{ name = "OpenAI", email = "" }]
+authors = [{ name = "OpenAI" }]
 keywords = ["healthbench", "medical", "clinician", "rubric", "llm-judge", "{use_case}", "{type}", "{specialty}"]
 
 [metadata]
