@@ -129,4 +129,4 @@ The default `both` keeps `reward` in [0, 1], as the guide requires of `test.sh`,
 
 ## Authors & Contributions
 
-Adapter: Mike-7777777. Issues and questions: open an issue or ask in `#adapters-spam` on the Harbor Discord.
+Adapter: Qumeng Sun (@Mike-7777777). Issues and questions: open an issue or ask in `#adapters-spam` on the Harbor Discord.
