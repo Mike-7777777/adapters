@@ -288,3 +288,17 @@ This adapter is developed and maintained by [Xiangning Lin](mailto:xiangnin@alum
 **Issues and Contributions:**
 - Submit Issues and Pull Requests to the main repository
 - Follow the project's coding style and commit guidelines
+
+### Task descriptions
+
+Task descriptions use the title and body of `resolved_issues[0]`, matching the
+[official baseline's converter](https://github.com/multi-swe-bench/MopenHands/blob/50625e9ca449fce3990aae44a4046430adeb9de2/evaluation/benchmarks/swe_bench/data/data_change.py#L23).
+Later resolved issues are excluded, and empty fields remain empty. Legacy records
+without a valid first issue fall back to pull-request text. Explicit repository,
+pull-request, and issue URL metadata sections are omitted.
+
+The historical parity results above remain evidence for the previous prompt.
+An offline review checked instruction generation across all 1,632 records at
+dataset revision `56ff018c04a38e27ada1e9d0a6d5839a51f88f0d`. This is a text
+consistency check, not a new model parity run. A matched subset run for the new
+prompt can follow separately.
