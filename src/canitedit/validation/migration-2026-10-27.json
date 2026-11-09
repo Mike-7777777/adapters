@@ -1,0 +1,1208 @@
+{
+  "recorded_at_utc": "2026-10-28T05:49:57.549597+00:00",
+  "scope": "Repository migration checks; historical model parity is carried over separately.",
+  "runtime": {
+    "harbor": "0.7.0",
+    "docker": "28.5.1",
+    "adapter_python": "3.11.14",
+    "task_python": "3.10",
+    "platform": "macOS / Docker Linux arm64"
+  },
+  "generation": {
+    "source_adapter_commit": "3639778d94f656bc6983d712e60068523c195361",
+    "adapter_contract": "v1",
+    "contract_revision": "7b4df9deb2381ae32f26e6cebec06aaa2975dc56",
+    "dataset_revision": "3c07f38b1f9385f3214fcea94d4664c79df0d36a",
+    "generated_tasks": 210,
+    "source_code_files_identical": 11,
+    "generated_files_identical": 1680,
+    "ordered_config_tasks": 210,
+    "historical_parity_statistics": {
+      "original": {
+        "runs": [
+          57.61904761904761,
+          58.0952380952381,
+          59.523809523809526
+        ],
+        "mean_percent": 58.41269841269841,
+        "sample_sem_percentage_points": 0.5723097262641266
+      },
+      "harbor": {
+        "runs": [
+          57.61904761904761,
+          55.714285714285715,
+          57.61904761904761
+        ],
+        "mean_percent": 56.98412698412698,
+        "sample_sem_percentage_points": 0.6349206349206328
+      }
+    },
+    "historical_run_ranges_overlap": true,
+    "generated_manifest_sha256": "a0d77ec33f5cd0c972e6f1143ebbeec39d4f0722dfbb0d7d7343be9b57cb9d88"
+  },
+  "oracle": {
+    "job_name": "canitedit-migration-oracle",
+    "trials": 210,
+    "passed": 210,
+    "exceptions": 0,
+    "started_at": "2026-10-28T05:41:18.868233Z",
+    "finished_at": "2026-10-28T05:46:36.743874Z",
+    "results": [
+      {
+        "task": "nuprl/canitedit__100_pandas_apply_descriptive",
+        "task_checksum": "ba6ea5463efc8880694a64f9a5780932bef95c9fae5fd346365e595a4d658777",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__100_pandas_apply_lazy",
+        "task_checksum": "4547db6d211105463cf60845b0ff43dc01b2a68e4627bf8f3443cb5ef40f1f36",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__101_house_prices_descriptive",
+        "task_checksum": "f78647b8104c0f0a29ef72dfea7975f6bff51cc5888f86df8051aba656971dfc",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__101_house_prices_lazy",
+        "task_checksum": "a484e9ab9c782318a969071b60aa6622984e48ecf355aa35a5dfc442767e73c3",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__102_nfa_descriptive",
+        "task_checksum": "2f5f48468beeb5196feb47d8bff36f4d04ab07c841748841402951f28e5d9942",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__102_nfa_lazy",
+        "task_checksum": "40973d68253d59612169a80a2a61ad33c67f0863c1467d10071b4a33a71b71fd",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__103_postfix_descriptive",
+        "task_checksum": "051a70e7a0b3ff74ce506c38182edc9cfb23a8cb9ef2a76cf6f1b30eb2c5124e",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__103_postfix_lazy",
+        "task_checksum": "49b50f16acd5a4f72d96808540eabc20499b14cfcbbd906497e757a1cd529bc9",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__104_filesystem_descriptive",
+        "task_checksum": "a1cf4f0524683c0fdb84b78c8e8f26a2eaa03001af0011392bc53d6a858a274a",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__104_filesystem_lazy",
+        "task_checksum": "049f60122bdbe99e4210a929fa0ecc3986e6004bd7807022f3e58a4743a71faa",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__105_descent_methods_descriptive",
+        "task_checksum": "c49baa80ade1291d6c9fc7875ec6af517c748c45a95f3e770bbb8ace91fc5312",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__105_descent_methods_lazy",
+        "task_checksum": "9a582bd6a828dea8b4484bf9d94d09589d0133a5b190ecdc9e308705ab06481e",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__106_conways_game_descriptive",
+        "task_checksum": "6af5458f6bac9f4843eae0eb7c8d526b32e4c84b23bce40e553fc59010ace355",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__106_conways_game_lazy",
+        "task_checksum": "5bf662c209b17893bc7f8bff7428b1cf691a160191c775897968cb6e1cd78b51",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__107_multiindex_sort_descriptive",
+        "task_checksum": "c894a67d7706582fffe2d34997e9c4493c73f1b3618669ab55b9f3b5db05ec09",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__107_multiindex_sort_lazy",
+        "task_checksum": "88a81c3cbafe52090e59b20edbaff2f7870178aefc0de1d6ab894eaba001cf2f",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__10_csv_parser_descriptive",
+        "task_checksum": "9d0af88aef67958929d2e11ffb8f88d42f3412406726d8bd4ce2305498c4d246",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__10_csv_parser_lazy",
+        "task_checksum": "d406c03e2f5e06674b0d75fbdb16afd3735037c67a082e57c8f79c8c89eb9ea9",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__110_integration_descriptive",
+        "task_checksum": "5c65f1edba0b3fac98a9ddfd94e8ee9b06f867037b07eac403a3ff64cf62abf1",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__110_integration_lazy",
+        "task_checksum": "20e6aeceec765cf4621520cf5d13281a8c264e7092483532da594aa37eeb5d14",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__111_coprime_euler_descriptive",
+        "task_checksum": "d85e547a01b4d0006b4b3af0fc6f50705b74cfc98fd04af66daac744a2ae0dc8",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__111_coprime_euler_lazy",
+        "task_checksum": "65568cb42f83b08160a58cbe5614d42c37db4d7a59c72edf3333bdfc08322aca",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__112_elliptic_curves_descriptive",
+        "task_checksum": "cafce96fad3f237533a50a60ff2d9281ee6043d753a1749e173195c0309bdc74",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__112_elliptic_curves_lazy",
+        "task_checksum": "c60b96ce6556527e0719917e0fc9c8c034fd338062a9ebf40316f44d5e4220a3",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__113_schnorr_zk_descriptive",
+        "task_checksum": "acd1fc2de2b528ff6b1122a2ae938184d710ae0c66ba23b5920fddd9a3d92bae",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__113_schnorr_zk_lazy",
+        "task_checksum": "3e2733118992abdd334614ba952e2da3aeb8659357992021de673598c92cc8f7",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__114_grid_world_dp_descriptive",
+        "task_checksum": "e4a354af204f5ac912a16aa29823fe57168a2005d2d7970923fb361499b45f52",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__114_grid_world_dp_lazy",
+        "task_checksum": "95db24e64e5da7200e2217a601725a3db801065c5f2d9f6f4cc067bf1c3fa846",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__115_arrangement_selections_descriptive",
+        "task_checksum": "403382807bc0ba8fa4dbf32b00de67eae2dac0a031f80e27af164a96c4698303",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__115_arrangement_selections_lazy",
+        "task_checksum": "83dc7c6a5dc7107af36d6eb4dab265e3a4155be59f680a7fc0e67bfc158bdbf5",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__116_cfg_descriptive",
+        "task_checksum": "03bf0d6723ddeb45711268b81c4cff2033657a94186ba689c40439f831e1b576",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__116_cfg_lazy",
+        "task_checksum": "0be076618b7cfeec9a51537e6f8b616ed57d3f34ad36876cd53d15c1a1452f7f",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__117_matrix_descriptive",
+        "task_checksum": "b9e3c83d1b3a9416ab92306279124040821a1dd334f9a815b2a76ff774a8f2bb",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__117_matrix_lazy",
+        "task_checksum": "a1f97642bc878cf11eda9503df367fd53898c952d324533cfedb61103a11554b",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__118_principal_component_analysis_descriptive",
+        "task_checksum": "3757d9c20ade92f7b23dba5339fb72c7543d076979e442a497e36086c6e40730",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__118_principal_component_analysis_lazy",
+        "task_checksum": "f0fabc3c54c2ce344606f2b0332f401a579c439b61b1df065ec3d97bb8f1b6dd",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__119_pollards_rho_factorization_descriptive",
+        "task_checksum": "ef0cf9db5354a23f237a99b4802ea5995221237ef0e6335173721b9fdbbe5999",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__119_pollards_rho_factorization_lazy",
+        "task_checksum": "bc2ce362b822c2a871a736a49b41b315f3670ecdfb4fc870aba316741be9719f",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__11_fibonacci_descriptive",
+        "task_checksum": "a78649b5a73223f8d813636e639c6983e0fa263d59f32ec643a4e3d3fd23f8e1",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__11_fibonacci_lazy",
+        "task_checksum": "222003405a1cc16f9c7bccbbef3bff96bffda1899e3d77a41228897cb9fd27b3",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__120_summary_statistics_descriptive",
+        "task_checksum": "bc837598e6b1af2b2cc7cfc9359df64ad570657450a8a818d805a550351792f8",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__120_summary_statistics_lazy",
+        "task_checksum": "3426b559cc35fe1c0ed35db445672194871eee53c3ca06da87877cec539a9b0e",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__12_linkedlist_sort_descriptive",
+        "task_checksum": "06244f4f3caf92fff953a51c619deb248ef3693a872f9a2f1d8a7c38d4040763",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__12_linkedlist_sort_lazy",
+        "task_checksum": "6440353dc3ebf40e21f3aa0a14c05361fcf9d08a37150431b26174608db387f1",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__13_maze_solver_descriptive",
+        "task_checksum": "237083c5a888dfc01630a1688fd6eabae1e64e1d9adabd93e42c41d83c53ec50",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__13_maze_solver_lazy",
+        "task_checksum": "a3f765f851cf75385e5696527db82f63f2dc279fd43adaf3bc3fafc8f048733b",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__14_matrix_operations_descriptive",
+        "task_checksum": "99a712495f5a7034dc53f981998fa8c93fbf2a37b5068efedd53ac812642b6ae",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__14_matrix_operations_lazy",
+        "task_checksum": "53f508dd4f1312ffeb81633aa61065e866d32692a1156b20f3dd7b8799a448d0",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__15_pandas_random_data_descriptive",
+        "task_checksum": "0997930256fdeaa767e4bab2058165ad3722ddb9de4040a474464ddc64638405",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__15_pandas_random_data_lazy",
+        "task_checksum": "7e2b80ce4651e74326e267560b3ef8a0623e7c4615906823e07dfbb66fc10eae",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__16_interpreter_descriptive",
+        "task_checksum": "78f5d3ad5dc824c53577fee4e26d8e8b3965bf44cb46e1131e900a4cb46c85c3",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__16_interpreter_lazy",
+        "task_checksum": "aa490dc1cff01312566f1978b3ca98d0a437ad35b437d4241d664ba195a91ab4",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__17_quiz_descriptive",
+        "task_checksum": "9d8e3610ae83825b7c41256c1441bd3d3d632e50c9752eba73b888f22cb07110",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__17_quiz_lazy",
+        "task_checksum": "582337371b7d7f18a3378dd64dd5bf881df2927c8ab8d7584105b1a1fc73994c",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__18_deck_of_cards_descriptive",
+        "task_checksum": "77b82409f91a2e84c548d562e6610c703598eb377e3288ba92266a185844c7fe",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__18_deck_of_cards_lazy",
+        "task_checksum": "2c97d04a38a530ecb0ca510596b64d672d655b3d116b580aba8c24a6d0dfc87b",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__19_traffic_analysis_descriptive",
+        "task_checksum": "992e0f87793901c68837e8d01d80d2e20f32e0fd9fc985b3fc7f467d5f2b5db6",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__19_traffic_analysis_lazy",
+        "task_checksum": "681fa7bfbddb2010d686902940833248f39fa012a79ad46c5d0ec10838295292",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__1_cipher_descriptive",
+        "task_checksum": "97a14a8335dd5fdc7ed6d8eef4135cee4c9c61c6f9d0bf1b6d1ef0a471cc4686",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__1_cipher_lazy",
+        "task_checksum": "60b027971d4ef1457d6c817a3daf6d3cda74640076e9439b5760d7110a8546bb",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__20_html_parser_descriptive",
+        "task_checksum": "010bec8d818c72e89db215c085074c5d5f5a9ffa81318c0d477d9981dac5af24",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__20_html_parser_lazy",
+        "task_checksum": "7c2bd7de087eb80a19be8853ea8fc8b4df2a6a958f0fc5dc39997fcac0fea0f8",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__21_dijkstra_bellman_descriptive",
+        "task_checksum": "59ed6471a9744264f62984d91ae23726ae3b0f7ceb83afe720120700177feb77",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__21_dijkstra_bellman_lazy",
+        "task_checksum": "9a73b9ef1801a28a26377c34b7e3153742a362211c44d97c71fb1fda283c859a",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__22_diff_format_descriptive",
+        "task_checksum": "dd0b209b487cec12185957cdb29c1e5369a94a5732cd53a3b7896f45e86b0e23",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__22_diff_format_lazy",
+        "task_checksum": "b8908a23a989eb65c34d8fcddbfe8f26a17733e7ebd10c85fd072c8ea52d06d1",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__23_bpe_tokenizer_descriptive",
+        "task_checksum": "b66a05dd2713cf86aff9a2d7604381662caf9b761842de26e4c43be22906d5de",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__23_bpe_tokenizer_lazy",
+        "task_checksum": "cd40732f26440d51f34640bcad46d9440b92238397f9900b129c250739abf2c8",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__24_tree_abstractions_descriptive",
+        "task_checksum": "07f3a4bf4ff8e0fd466347c5ff24a0cab4e0a89e2958b852cb0aaa166e7bb319",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__24_tree_abstractions_lazy",
+        "task_checksum": "7f5993b9d0776e4fd6533a39324ac410ffe153d29d7efa221193bb2a060cd723",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__25_sudoku_solver_descriptive",
+        "task_checksum": "687f5c7bd52c89c433a62bf8c1b51fc073fa267b6af37dcbbd12317569d444c7",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__25_sudoku_solver_lazy",
+        "task_checksum": "b4bdbe8c8b0d12c906d3b9843932d67011ef5aa9bcfe3f3141b15766d50aa10a",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__26_kl_divergence_descriptive",
+        "task_checksum": "d46d39fc879a499af9a011438f24bc21aa518d523c81106ee922d3d2006c4e82",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__26_kl_divergence_lazy",
+        "task_checksum": "05f8bb73c19c800e794a2e104306b2cdb775c6912caa56ea2e2134e5ce5e320b",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__28_password_strength_checker_descriptive",
+        "task_checksum": "0103f0751f90844a3629050f73756e886a2ab7a4206ec94fcf7f0eaf5ffea777",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__28_password_strength_checker_lazy",
+        "task_checksum": "14c302476a2ff93fe5c627754dffed2581c8f550f725d9672fe8216aff1a5bdb",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__29_genetic_algorithm_descriptive",
+        "task_checksum": "6ea047aacf29f187437f7f5d8a99af4ad9d9b7597e99ce7a507152215d83aecb",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__29_genetic_algorithm_lazy",
+        "task_checksum": "46b8f2e3f352373e14dc95421bc00c2cd7b4e5f52a95e41da9a14234cc99cc4b",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__2_cov_corr_descriptive",
+        "task_checksum": "402b0c02d5ff4265b36d8fc1d27adda547c4fe74e3b99e6e4c664a02f427217c",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__2_cov_corr_lazy",
+        "task_checksum": "eeacf2a356080f4aa19fead84dfc771fb209eb59453f2079c027e913646205ba",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__30_cross_correlation_descriptive",
+        "task_checksum": "4839be3d3696f2c00c800ac795c328809f2d8ba80eb101ced04b824ffd1c0f35",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__30_cross_correlation_lazy",
+        "task_checksum": "8315edc7f7a6fe830e81412c53a9533042b302ac3e7cbf0f7dd9703bc5da766a",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__31_bookkeeping_descriptive",
+        "task_checksum": "ebafa34b43974911ed2f55ead9de80683b440b5e807a9502c51a396794a3443b",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__31_bookkeeping_lazy",
+        "task_checksum": "8277356f7e1823365d4fa6238cca2fb102ddfd291868b867fe3957a1dd26949f",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__32_markov_transition_descriptive",
+        "task_checksum": "f7bc3322f7cdaa267fdcc37b7d8b24d480440ff67c0b331f6be8021baaba0e77",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__32_markov_transition_lazy",
+        "task_checksum": "276f0514472c5d9c293c5ca0473a56d377be9f19a2334ce9ffdcc40b7aa30f91",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__33_genetic_algorithm_2_descriptive",
+        "task_checksum": "01171ecb2e1171855273d8e4f0d16841a8236bb1c045d296e27cdd69c8f82df2",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__33_genetic_algorithm_2_lazy",
+        "task_checksum": "e2a5206b6b3a7497c74762eb34a84bf513e5a1432ce1cba05b17ee098046c7a2",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__34_oop_refactor_descriptive",
+        "task_checksum": "689c0f35a50f1e76718f898aba5bb5edc17b1b3029cb03f775a39a901a907f4c",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__34_oop_refactor_lazy",
+        "task_checksum": "5f8f20bef8334593eb54dee8f27aee880f8df0bada8465223bfb0c6367d37f08",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__35_topological_sort_descriptive",
+        "task_checksum": "d2d2ae64a8e4f39d4f23f8e9cb92ffb9c88feea0211c75f127bad1f7cde0356a",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__35_topological_sort_lazy",
+        "task_checksum": "31b191d5e4824b46ed31bd716c0ef58e1ab5ca109166527f4078e72b96274d2a",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__36_strongly_connected_descriptive",
+        "task_checksum": "bf3adf2c011768cc664ae3d99c77df087dbfae9b1e68bb8bac3533ddb3f3a7a6",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__36_strongly_connected_lazy",
+        "task_checksum": "2c31a1009cb89531bccce6e71a67aae3f44bc3a214b0d2dd5707573033bcd383",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__37_dijkstras_descriptive",
+        "task_checksum": "fd9acec07b694796199c54ab4f48c7b71d958d5aae5ba78c82dee3ca3a3f11a1",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__37_dijkstras_lazy",
+        "task_checksum": "8e03900734691b2e2f12e5e40aaf4ef51a79ec9d14bb246d415eef9765bab641",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__38_high_order_descriptive",
+        "task_checksum": "3348c08a9bcc05d7c0ebd182b2e42404468335aec57b402e9ba186667c3857db",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__38_high_order_lazy",
+        "task_checksum": "9184b26455bfd188d74c62f8292acbe93ec240843183854c9b3b98adc73fd19e",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__39_vowel_count_descriptive",
+        "task_checksum": "b31a95be9c064f07d88ccd49052a9a1307e20e8d01606ffa46ac6b7e612bbd36",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__39_vowel_count_lazy",
+        "task_checksum": "72af1db5775d2a3b8a61fe84e9b40f091f299339c65f4e2836d1497e0976944e",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__3_hello_world_descriptive",
+        "task_checksum": "e64ab72a0d115f4e7744ec2067e450d04147b381d2f4962841ed9dcfd0f75635",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__3_hello_world_lazy",
+        "task_checksum": "f5ff0eb2cf466cd35c909b4df92759f5b5f69c391e7e662a31f4b4b0db3c58cf",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__40_adjacency_descriptive",
+        "task_checksum": "7f15bc0b4a251fb1cac918f32a2875f791af6af84181e473eace3de015ce3abf",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__40_adjacency_lazy",
+        "task_checksum": "609c98a40c071d5eefd7b36d4bda3261700ec23c3f214574e0cdfe92f67fa899",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__41_group_theory_descriptive",
+        "task_checksum": "7b19a2a1c4c49613130afaee1f32a1f79bbc8f43a04f76b8439112163fa3b241",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__41_group_theory_lazy",
+        "task_checksum": "ab2482e430401ccc4f72e445b1ec683e47345e6a1d6ec06c4bf1d9d3ccd5941d",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__44_html_to_markdown_descriptive",
+        "task_checksum": "cc5142071f47767fb9ed98c895ad6c84bdc0791fb35121116522801975cd1928",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__44_html_to_markdown_lazy",
+        "task_checksum": "e742ad196253c79eed6e6e9339c9789c9331b6005aadb669d5852b2bef7ec0da",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__45_double_consonant_descriptive",
+        "task_checksum": "cdab747ee369b40031adbda9ba339be8dbed1e2b32df812f205d03ccd53410e5",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__45_double_consonant_lazy",
+        "task_checksum": "a12c8a36099a1e167b6ec3884a03ce52c99dd3defac09aa0d06cdec960b04f68",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__46_consonants_within_descriptive",
+        "task_checksum": "707157a02f96033baada99b5ce1eb7b4cc166e33c70b71d380d1f505ae7bf62d",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__46_consonants_within_lazy",
+        "task_checksum": "931e02a477be6ce1c46731b3f498717cf8b24f78eea6449f5b11a284961452de",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__47_merge_sort_descriptive",
+        "task_checksum": "7aee81f303b4ed53849f1f9733cf9ee5d19a365d8d3c28db822af41938d2cb8e",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__47_merge_sort_lazy",
+        "task_checksum": "2cff1700608a22192d4112c5213e011441820312fe9be5c78dcf53512ff669dd",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__48_max_sum_subarray_descriptive",
+        "task_checksum": "b930817e9990ef8ccd5a67ac94cbac47658267bfffa9ca1b7432d6a1889e1f55",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__48_max_sum_subarray_lazy",
+        "task_checksum": "2ea6415836ad751417c58e383a47dd3135569127f3272d00647e7304cb0c1d91",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__49_binary_search_descriptive",
+        "task_checksum": "ca1ec3057cd6f6f288ba9c1c7e56adc45099933a598dcba6f8998cf3a4eccc92",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__49_binary_search_lazy",
+        "task_checksum": "e35d5c87ca4a3ea24746d7da2cc70b565d5d32defba26fba6d31e76b50a30a20",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__4_tensor_operations_descriptive",
+        "task_checksum": "6d569dd4b5658b9f48923e167a5c9bb21a5fdfc6079f25fc67500cd9006c6efa",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__4_tensor_operations_lazy",
+        "task_checksum": "bab747bb47e9845b2e52b5329cab70bea2b602175a00ba661fc0858a155a88ab",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__50_syllable_count_descriptive",
+        "task_checksum": "09d289c7881bcc3e97e6a463ae5ecb88f8d1ad00874700c52eb6beae4d0f0cef",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__50_syllable_count_lazy",
+        "task_checksum": "0516b7ec29b19dc457181665fe6dfc543e67c130486949462f93ecc5460848fe",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__51_managers_manager_descriptive",
+        "task_checksum": "0f1326c4baa2320c4703079a01ec81ca182b69a86257cd82856038ffdfdc711f",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__51_managers_manager_lazy",
+        "task_checksum": "32faa2dc7210464251e422a9b3688fbafb18e83ae975a34825fc890c18e43d51",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__52_magic_square_descriptive",
+        "task_checksum": "ef79b009887f7fb02089ee3293ea115152dfd4a824c9f7ceeebd459ff24bdfaa",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__52_magic_square_lazy",
+        "task_checksum": "0d8e1861f4012f0e7c0292449bc7c1a5a038d48582d14f3fc8fa1771474b5a9e",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__53_minimax_to_alphabeta_descriptive",
+        "task_checksum": "ce1c3c6f79a05262498c9b6adedafba836443492b0cae996c6c84a3900873ccc",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__53_minimax_to_alphabeta_lazy",
+        "task_checksum": "7c264b3a57be39c189d138449dfecaed57e381efdcc3dc02c3e47659457700f8",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__54_strategy_descriptive",
+        "task_checksum": "9fa0bf27813622a604a28e1dfd963e22b895474a1a5177e8a23eee1f0740e554",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__54_strategy_lazy",
+        "task_checksum": "18e3b8d71b9b53b4bc1a0acff14cb6232f1e9a9a33e6717ade13e1132a8fb712",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__55_bm25_descriptive",
+        "task_checksum": "12b1a6d6575607b06b8b4c3e15f1dc47e5c0305111a3c45f9c76d14b61b96475",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__55_bm25_lazy",
+        "task_checksum": "162456c13fe82b820944d2259f57e1f5d3767ce3190d91b41bc3d13f7727a2ae",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__56_interference_vars_descriptive",
+        "task_checksum": "875b4647adf79edb57560bca4556cdd94e2c0f3a1c6a131e5186612ec55ffba9",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__56_interference_vars_lazy",
+        "task_checksum": "535ef3892c71417372890864860664d538b4d5d74b9187e7b6a574e2e3c536ad",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__57_string_formatter_descriptive",
+        "task_checksum": "fb8282e370e428082b771591176ac2302255021a93d9654cd79c33d8a9a861a7",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__57_string_formatter_lazy",
+        "task_checksum": "4e5270aa0069f05a6ce79b300fa5525daa7cb750931c03bb5758ec2ac7d9be56",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__58_dependency_solver_descriptive",
+        "task_checksum": "7e6bf87b9d03536ec98b9615d2fc3f9332652c1764c791ca6d5bf91faf546883",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__58_dependency_solver_lazy",
+        "task_checksum": "a22d53d8f3130a29d78953a4f1e6448a22c351bcf13dc332acd660a9f6633f3d",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__59_standard_scaling_descriptive",
+        "task_checksum": "0d8e0029c90d4026e84f3d0721df2c61868850d19964a911794e5b7008f793bc",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__59_standard_scaling_lazy",
+        "task_checksum": "d66ecf353ac2b5f4a74b310f58af252d47479ededf139be796c4f19ab68d458f",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__60_unique_number_descriptive",
+        "task_checksum": "16604666bbc31ac09008a55f00dd8d7d0c515b0b17373bb287e7fa347bcf00cd",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__60_unique_number_lazy",
+        "task_checksum": "dc7874d775c307efe498f7da686c55e8b7f2850c96039e5f730e04a66514dac5",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__61_ridge_regression_descriptive",
+        "task_checksum": "f2b4577a095ef039b1d7f4ccf1d12e193917947cac169114e712df93582679c5",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__61_ridge_regression_lazy",
+        "task_checksum": "4bf89ea7d34713f93e7e116e0e6b293f94cbfcd9d20161bb128e2372091832e1",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__63_knary_trees_descriptive",
+        "task_checksum": "8c66fe853c6e50e2f13e3cdd8a819013d98db42f8dca47d09e1dbd69fee80bf0",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__63_knary_trees_lazy",
+        "task_checksum": "8c30ad077a0ae8c0062e78205e0ba1de08a987ad0585354b4a54c218a208e3f1",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__65_tournament_tree_descriptive",
+        "task_checksum": "dcc10405e7ca1d97e5d2cde5816233c8cebeb6e197cc01517d4557941ad43f28",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__65_tournament_tree_lazy",
+        "task_checksum": "76d4fc6ee8452bf065f619e701bc2fa929b3a88131edfdbd705af55057bd59d7",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__66_product_analysis_descriptive",
+        "task_checksum": "bda833be14a23713edbf8eaa2b340ee98eeb5ab0c047d405a8aa8a0566547009",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__66_product_analysis_lazy",
+        "task_checksum": "0eb83ced011d63b2336352a677901cd7ff797a3d2c88751d36df49653415980a",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__67_test_invariants_descriptive",
+        "task_checksum": "3f072b49e707b987026dc0c23f36f9152eaebd3845dd44e842bbcb2d9becac5f",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__67_test_invariants_lazy",
+        "task_checksum": "bb63a398553abdc694c0b69acd8bf57d26801798ffdb10a232ec1f51420a86c4",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__68_prime_numbers_problem_descriptive",
+        "task_checksum": "1a47722faf8f53f548941814aea82caa6619d75455fa5c4d204d0005b2b2eea3",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__68_prime_numbers_problem_lazy",
+        "task_checksum": "35e17d907a010535766c420b2dca1cbe58d53b74ed8cbd6f4cd86cd227e162f4",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__6_locked_box_descriptive",
+        "task_checksum": "9071af87831307dbeadbd526ea0c1b8ba71ae9c2a9fdc16ec59734a99bc3ecdc",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__6_locked_box_lazy",
+        "task_checksum": "2fe69100f9faf07d3d409e9025c194531dd054d456932088f8f2e46b4b784f43",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__70_sieve_of_eratosthenes_descriptive",
+        "task_checksum": "04fbdab85a6786fbc5f547dcc9d7dd6d52d8fb940cdfaee5ebfee3da353fa354",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__70_sieve_of_eratosthenes_lazy",
+        "task_checksum": "0f82586769de0946ba74e37d525afa5e4ac607b6b331b506f178a03fa76d7f58",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__71_euclidean_algorithm_descriptive",
+        "task_checksum": "cac3f66a4338940975abe6637f86aa942f818299fa8729a2743df2cb042e9514",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__71_euclidean_algorithm_lazy",
+        "task_checksum": "4d4927345dc3bff72f4bbe62ddf8f9009f0e407bce6ce1ea0d2d942beaa469d4",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__72_disjoint_cycles_descriptive",
+        "task_checksum": "7045354f3ef769b18845ab48f42542df3528dc2dac3b87af47748291b47a5562",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__72_disjoint_cycles_lazy",
+        "task_checksum": "3a3ef057076c14f6b0f89d6e925197d6439975db35218f0d010c5d737818aca6",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__73_permutation_equality_descriptive",
+        "task_checksum": "89316f09d5c78b421882a54f73146254ed61fc8208b7cacf247aa46a4a301c00",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__73_permutation_equality_lazy",
+        "task_checksum": "b1dbbc6b2f2122bd0dbb8287470931628b1c516fcfbe225a504c22646baec870",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__76_memory_alloc_descriptive",
+        "task_checksum": "f01e52b5eba7897c38f3d44b8bd24c0f42972f3ae9074f45d3834966e5d03d4c",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__76_memory_alloc_lazy",
+        "task_checksum": "982995d7add3ea27bdfddc05a900408ebf179b5d11f86f319aa3ca882ee96ef7",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__77_step_counter_descriptive",
+        "task_checksum": "932f4db47eeaa9baaa1861afe702db9a337150b72b1f19a40536f50bcb12307d",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__77_step_counter_lazy",
+        "task_checksum": "7504e630299300ef885b234fc6eee8286f9557b7199c5ba88f2d0efba18767c0",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__78_llm_inference_descriptive",
+        "task_checksum": "acd9645e9316e8f673c11dea9ea0771d72f072ef4a0aee502dc4fe651346ace3",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__78_llm_inference_lazy",
+        "task_checksum": "89040b5fd5c880908eca75375691b867030f4eaf1eb2585e164f8db684234555",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__79_int_to_key_descriptive",
+        "task_checksum": "75fb85890065eba22383c49bd9f1190034bb84c821d38b681e4bcd7388fae69b",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__79_int_to_key_lazy",
+        "task_checksum": "1d8a30be94619c434d3f3986fed7ab8416ce63fab5207369e5072406c7bbd407",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__7_temperature_converter_descriptive",
+        "task_checksum": "487f64c6fd361b9820054879606366072b47c733a3ee0895a86da65cf3904d98",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__7_temperature_converter_lazy",
+        "task_checksum": "4a31db236783bf99d64013009809247423e0ba95769a9435c0b481b3179d6965",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__80_circular_queue_descriptive",
+        "task_checksum": "dce5dec542617bd424ecdd1dd72766c71ad0d70ab1d661593b899e76ce54bfc0",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__80_circular_queue_lazy",
+        "task_checksum": "ddbfcd192256111afab7e346f99b79d4a5436ee545b88b93e1199eaebf2b3e26",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__81_linked_list_debug_descriptive",
+        "task_checksum": "13bb58aeed096a8a13b7b2963c1890be69fc397ecb92f84aaebf038292e1a3e0",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__81_linked_list_debug_lazy",
+        "task_checksum": "74b37ab2bbe04a88f47c98853fe2ad51866bd610a860ef5cf166a7ce07257913",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__85_dpll_descriptive",
+        "task_checksum": "f693710f1ac97aa2bf93935e4e913ec585e7c8239d73092c77bd638082186583",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__85_dpll_lazy",
+        "task_checksum": "5611dc2c5dc439bbbebd7c955e891375127496616590c738c4facd89483e4d0a",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__86_pyast_descriptive",
+        "task_checksum": "af142be2c6f514b467c7883a39c7a4f5ece2c7c627e13c1bd899c3a32230fcd3",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__86_pyast_lazy",
+        "task_checksum": "110d8d53656b2f37540b0362c36dd560103809fd84b2b3ef87bf699020b5b894",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__87_documentation_descriptive",
+        "task_checksum": "d99eaa8d211163e3f15427dce5fa73cae0a7331d2aa001aebcdbacd4f3f8402c",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__87_documentation_lazy",
+        "task_checksum": "915ef512c50df34a8cc422aaecce4639e0746c8c11d1f08b0b0f23c5cdf7e1b1",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__88_correlation_clustering_descriptive",
+        "task_checksum": "9d98f04b13cf2bc24a637de318310a0af32f0f4b4663dbdf2757ee8f17210e33",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__88_correlation_clustering_lazy",
+        "task_checksum": "68452752414ece74138bcf9f25356d16d71b5bd14f61f80162c583e379652c97",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__89_palindrome_detector_descriptive",
+        "task_checksum": "27836efab915dbf7f0a58bdf145e1f4ec765171fd7a5dc58b0a43f3d883cf736",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__89_palindrome_detector_lazy",
+        "task_checksum": "cc980f0f294b7e083473b7645b9306d71a5c154baaa86c3f61dfd6e5d76e2696",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__8_vector_lib_descriptive",
+        "task_checksum": "01bcf5b5fc83a5dbe8033fa03988d2ad266d5b5b3fb3e577dfecc40193f97e89",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__8_vector_lib_lazy",
+        "task_checksum": "8f75a4bd770b4b65d4899fb3c47895f2a1fafd3328a70e5d0c5392f0575d4e9f",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__90_dna_transcriber_descriptive",
+        "task_checksum": "d1ffd8e919d30579c93bbd2498596b581bde4c0228e974e1f851c3723a4ef8c9",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__90_dna_transcriber_lazy",
+        "task_checksum": "f80106d2bdec070eb97eefd952ebafacd2442374609a3fbaf10bd29d88c1e52f",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__91_interest_calculator_descriptive",
+        "task_checksum": "65f39ed69ba4e711670973dfd47b54142fea13ced2fab08d0ace341d36a0f58c",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__91_interest_calculator_lazy",
+        "task_checksum": "25effdc948c02b61d1314192e56d806e95b4a1a1f68375fb42f1c26e90b5d693",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__92_heron_area_descriptive",
+        "task_checksum": "0346e944a5f87d9225b07ac5d894bea76e7c491d83f7b9ce2426adffb1480abd",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__92_heron_area_lazy",
+        "task_checksum": "4d7f60b8911075d26396325c9b9e39d02891fcb3cc03877aba6a2178971fd180",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__94_knn_descriptive",
+        "task_checksum": "3ea207c3ae618b237e0188121ab7f11be7952d75b8e19b1c4de8fced65f55e6e",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__94_knn_lazy",
+        "task_checksum": "83e9329d850e5d8e89a04bec9202d492a2770427d72787673e6c5d38153aaf32",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__95_dbscan_descriptive",
+        "task_checksum": "49552434f2299e91908ff62628916f2b26b106fcd406e9adbd1d59102fe6c993",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__95_dbscan_lazy",
+        "task_checksum": "e251ac99c5d98e8adefc576bdc7028ab5222474560dd745fa7578c0eda306b13",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__96_distribution_clustering_descriptive",
+        "task_checksum": "8e6908350b5b31f2627b19645391751b9a565ff4521623381b1fd2195a2831c9",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__96_distribution_clustering_lazy",
+        "task_checksum": "30d9c62dc67a764a96d68963decf2c8496d5c4842d7a46a3504bbf453fefd609",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__97_nash_equilibrium_descriptive",
+        "task_checksum": "cbcf277901fe49a6054eff78541330bb9caca7e1f19afb417b1652693cad16d5",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__97_nash_equilibrium_lazy",
+        "task_checksum": "d2f5b60b122a8f1c63718591012b67b91406d5d81b381e7e84d52bb11d61ee11",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__98_encoder_decoder_dataset_descriptive",
+        "task_checksum": "7612732fefde8d1e785f627de26fe4a30e33573a016d4519b437d6e3aa5a10ff",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__98_encoder_decoder_dataset_lazy",
+        "task_checksum": "25898e7c18e2cd62148d53da4aece87f8ab38a5fcee737dfc24087891815c35e",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__99_secondary_keys_descriptive",
+        "task_checksum": "73eecc718e139f3c78ea54cf766d7a24d7126d043a4d0fc6dca3747af968b99a",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__99_secondary_keys_lazy",
+        "task_checksum": "441202e42d62ce8ca4d81ffe2e24d9c7c4e483d936cda839e8c98935b26f49a9",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__9_sorting_descriptive",
+        "task_checksum": "59115f53811fdb3bd2d537cfb618f9f29db689f2c75d0a455cb15eb1a1fa4a56",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__9_sorting_lazy",
+        "task_checksum": "e8b730b18575bc46f3765578859880aaf5a07762ea497a12150b686f86500460",
+        "reward": 1.0
+      }
+    ]
+  },
+  "reference_yaml_smoke": {
+    "job_name": "canitedit-reference-yaml-smoke",
+    "trials": 3,
+    "passed": 3,
+    "exceptions": 0,
+    "started_at": "2026-10-28T05:48:06.055976Z",
+    "finished_at": "2026-10-28T05:48:18.683721Z",
+    "results": [
+      {
+        "task": "nuprl/canitedit__10_csv_parser_descriptive",
+        "task_checksum": "9d0af88aef67958929d2e11ffb8f88d42f3412406726d8bd4ce2305498c4d246",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__10_csv_parser_lazy",
+        "task_checksum": "d406c03e2f5e06674b0d75fbdb16afd3735037c67a082e57c8f79c8c89eb9ea9",
+        "reward": 1.0
+      },
+      {
+        "task": "nuprl/canitedit__11_fibonacci_descriptive",
+        "task_checksum": "a78649b5a73223f8d813636e639c6983e0fa263d59f32ec643a4e3d3fd23f8e1",
+        "reward": 1.0
+      }
+    ]
+  },
+  "packaging": {
+    "wheel_built": true,
+    "template_files_in_wheel": 8,
+    "installed_wheel_generated_tasks": 1,
+    "matches_full_generation": true
+  },
+  "verifier_controls": [
+    {
+      "case": "valid",
+      "reward": 1.0,
+      "status": "OK",
+      "passed": true
+    },
+    {
+      "case": "wrong_solution",
+      "reward": 0.0,
+      "status": "FAILED",
+      "passed": true
+    },
+    {
+      "case": "missing_solution",
+      "reward": 0.0,
+      "status": "missing_solution",
+      "passed": true
+    },
+    {
+      "case": "malformed_payload",
+      "reward": 0.0,
+      "status": "PAYLOAD_ERROR",
+      "passed": true
+    },
+    {
+      "case": "syntax_error",
+      "reward": 0.0,
+      "status": "FAILED",
+      "passed": true
+    },
+    {
+      "case": "sys_exit",
+      "reward": 0.0,
+      "status": "FAILED",
+      "passed": true
+    },
+    {
+      "case": "os_exit",
+      "reward": 0.0,
+      "status": "FAILED",
+      "passed": true
+    }
+  ],
+  "structural_validation": {
+    "passed": 31,
+    "errors": 0,
+    "warnings": [
+      "Historical parity API costs were not tracked precisely; parity_costs remains null."
+    ]
+  },
+  "historical_evidence": {
+    "adapter_pr": "https://github.com/harbor-framework/harbor/pull/1849",
+    "parity_artifacts": "https://huggingface.co/datasets/harborframework/parity-experiments/discussions/257",
+    "dataset_pr": "https://github.com/harbor-framework/harbor-datasets/pull/238",
+    "exit_guard_review": "https://github.com/harbor-framework/harbor/pull/1849#issuecomment-4824660961"
+  },
+  "review_coverage": {
+    "harbor_contract": {
+      "status": "assessed",
+      "evidence": "Structural validation, task/job schema parsing, reference YAML run, package installation.",
+      "remaining": "Historical API cost estimate unavailable (non-blocking warning)."
+    },
+    "upstream_fidelity": {
+      "status": "assessed_with_unverified_historical_pins",
+      "evidence": "Generator and templates unchanged from source PR; 210-task / 1680-file equality; parity mean and sample SEM recomputed.",
+      "remaining": "Historical model is the gpt-5-mini alias; exact model snapshot and Harbor runtime revision unverified. Exit safeguard postdates parity, with prior reviewer waiver of rerun."
+    },
+    "implementation": {
+      "status": "independently_reproduced",
+      "evidence": "210/210 Harbor oracle, 3/3 reference-YAML smoke, installed-wheel generation, 7 verifier controls.",
+      "remaining": "No new model-based parity or registry publication was performed."
+    }
+  }
+}
