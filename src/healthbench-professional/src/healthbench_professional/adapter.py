@@ -11,7 +11,9 @@ revision (hbp_data.py).
 from __future__ import annotations
 
 import base64
+import hashlib
 import shutil
+from collections import defaultdict
 from pathlib import Path
 
 from . import hbp_data
@@ -21,6 +23,32 @@ TEMPLATE_DIR = PACKAGE_DIR / "task-template"
 DATA_MODULE = PACKAGE_DIR / "hbp_data.py"
 REWARD_MODES = ("unclipped", "both", "clipped")
 NO_ORACLE = 'echo "no oracle reply was generated for this task" >&2\nexit 1'
+SPLITS = ("full", "parity")
+PARITY_SIZE = 150
+PARITY_IDS_FILE = PACKAGE_DIR / "parity_task_ids.txt"
+
+
+def select_parity_ids(rows: list[dict], size: int = PARITY_SIZE) -> list[str]:
+    """Pick the parity subset, stratified by (use_case, type).
+
+    Each stratum gets seats in proportion to its size (largest remainder; ties
+    go to the earlier stratum key). Within a stratum, records are taken in
+    sha256(id) order, so the choice needs no random generator.
+    """
+    strata: dict[tuple[str, str], list[str]] = defaultdict(list)
+    for row in rows:
+        strata[(row["use_case"], row["type"])].append(row["id"])
+    keys = sorted(strata)
+    quotas = {k: len(strata[k]) * size / len(rows) for k in keys}
+    seats = {k: int(quotas[k]) for k in keys}
+    by_remainder = sorted(keys, key=lambda k: -(quotas[k] - seats[k]))
+    for k in by_remainder[: size - sum(seats.values())]:
+        seats[k] += 1
+    chosen = []
+    for k in keys:
+        ranked = sorted(strata[k], key=lambda i: hashlib.sha256(i.encode()).hexdigest())
+        chosen += ranked[: seats[k]]
+    return sorted(chosen)
 
 
 def fill(template: str, values: dict[str, str]) -> str:
@@ -39,8 +67,12 @@ class HealthBenchProfessionalAdapter:
         source: str | None = None,
         oracle_dir: Path | None = None,
         reward_mode: str = "both",
+        split: str = "full",
         **kwargs,
     ):
+        if split not in SPLITS:
+            raise ValueError(f"split must be one of {SPLITS}, got {split!r}")
+        self.split = split
         if reward_mode not in REWARD_MODES:
             raise ValueError(
                 f"reward_mode must be one of {REWARD_MODES}, got {reward_mode!r}"
@@ -55,6 +87,13 @@ class HealthBenchProfessionalAdapter:
 
     def run(self) -> None:
         rows = hbp_data.load_rows(self.source)
+        if self.split == "parity":
+            ids = select_parity_ids(rows, PARITY_SIZE)
+            # The original-benchmark side reads the committed list, so both
+            # sides must run the same records.
+            if ids != PARITY_IDS_FILE.read_text().split():
+                raise RuntimeError(f"parity subset differs from {PARITY_IDS_FILE.name}")
+            rows = [r for r in rows if r["id"] in set(ids)]
         if self.task_ids:
             rows = [r for r in rows if r["id"] in self.task_ids]
         if self.limit is not None:

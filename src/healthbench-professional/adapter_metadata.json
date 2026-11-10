@@ -18,14 +18,14 @@
       {
         "split": "full",
         "adapted_benchmark_size": 525,
-        "parity_benchmark_size": null,
-        "parity_sampling_rate": null,
+        "parity_benchmark_size": 150,
+        "parity_sampling_rate": 0.2857,
         "registry_benchmark_size": null,
         "added_agents": [],
         "parity_matching_agents": [],
         "parity_unmatching_agents": null,
         "parity_costs": null,
-        "notes": "Work in progress: parity plan, oracle solutions and reward range are pending agreement with the Harbor team."
+        "notes": "Oracle passes on all 525 tasks (Harbor 0.25.0). Parity runs on the 150-task stratified subset (--split parity) once keys are provided."
       }
     ]
   }

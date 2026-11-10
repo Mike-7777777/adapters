@@ -9,7 +9,7 @@ in the Harbor format at the configured output directory.
 import argparse
 from pathlib import Path
 
-from .adapter import REWARD_MODES, HealthBenchProfessionalAdapter
+from .adapter import PARITY_SIZE, REWARD_MODES, SPLITS, HealthBenchProfessionalAdapter
 
 # Default output dir: <repo>/datasets/<adapter_id>
 DEFAULT_OUTPUT_DIR = (
@@ -60,6 +60,13 @@ def main() -> None:
         help="Default REWARD_MODE written into task.toml (see tests/grader.py); "
         "HBP_REWARD_MODE overrides it at run time",
     )
+    parser.add_argument(
+        "--split",
+        choices=SPLITS,
+        default="full",
+        help=f"'parity' generates only the {PARITY_SIZE}-task parity subset "
+        "(parity_task_ids.txt; see the README)",
+    )
     args = parser.parse_args()
 
     adapter = HealthBenchProfessionalAdapter(
@@ -70,6 +77,7 @@ def main() -> None:
         source=args.source,
         oracle_dir=args.oracle_dir,
         reward_mode=args.reward_mode,
+        split=args.split,
     )
 
     adapter.run()

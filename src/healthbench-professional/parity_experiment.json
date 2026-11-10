@@ -2,12 +2,12 @@
   {
     "adapter_name": "healthbench-professional",
     "agent": "<agent>@<version>",
-    "model": "<model>",
+    "model": "claude-sonnet-5-5",
     "date": "YYYY-MM-DD",
     "adapted_benchmark_size": 525,
-    "parity_benchmark_size": null,
+    "parity_benchmark_size": 150,
     "number_of_runs": null,
-    "notes": null,
+    "notes": "150-task subset stratified by use case and type (parity_task_ids.txt); judge gpt-5.4-2026-03-05, reasoning low, on both sides.",
     "original_parity_repo": null,
     "adapter_pr": [
       "https://github.com/harbor-framework/adapters/pull/24"
@@ -17,7 +17,7 @@
     "metrics": [
       {
         "benchmark_name": "HealthBench Professional",
-        "metric": "<metric_name>",
+        "metric": "length-adjusted score",
         "original": "<mean +/- sample_SEM, e.g. 45.2% +/- 1.3%>",
         "harbor": "<mean +/- sample_SEM, e.g. 44.8% +/- 1.1%>",
         "original_runs": [],

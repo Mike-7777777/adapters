@@ -67,17 +67,37 @@ cd adapters/healthbench-professional
 uv run healthbench-professional --output-dir ../../datasets/healthbench-professional
 ```
 
-Options: `--limit N`, `--task-ids ID ...`, `--overwrite`, `--source PATH` (a local copy of the pinned file; its sha256 is still checked), `--oracle-dir DIR` (`<task_id>.txt` oracle replies for `solution/solve.sh`), `--reward-mode {unclipped,both,clipped}`.
+Options: `--limit N`, `--task-ids ID ...`, `--overwrite`, `--source PATH` (a local copy of the pinned file; its sha256 is still checked), `--oracle-dir DIR` (`<task_id>.txt` oracle replies for `solution/solve.sh`), `--reward-mode {unclipped,both,clipped}`, `--split {full,parity}` (`parity`: the 150-task parity subset).
 
 Unit tests: `uv run pytest tests`.
 
 ## Comparison with Original Benchmark (Parity)
 
-Pending; the plan will be agreed with the Harbor team before any run. Proposed: Scenario 2, a claude-code sampler added to a fork of simple-evals, the same judge on both sides, a 150-task subset stratified by use case and type, 3 runs per side.
+Pending; runs start once the Harbor team provides keys. Plan agreed in review: Scenario 2, a claude-code sampler added to a fork of simple-evals, `claude-code` with Claude Sonnet 5.5 on both sides, the same judge (`gpt-5.4-2026-03-05`, reasoning low), a 10-task sanity check on both sides, then 3 runs per side on the parity subset. Benchmark score on each side: the mean unclipped task score, clipped to [0, 1] after averaging.
+
+**Parity subset.** `--split parity` generates the 150 tasks listed in `src/healthbench_professional/parity_task_ids.txt`, which the simple-evals side reads too. They are stratified by use case and type: each of the 6 strata gets seats in proportion to its size (largest remainder), and within a stratum records are taken in sha256(id) order. `select_parity_ids` in `adapter.py` reproduces the list, and generation stops if the two differ.
+
+| Use case | Type | Records | In subset |
+|---|---|---|---|
+| consult | good_faith | 143 | 41 |
+| consult | red_teaming | 93 | 27 |
+| research | good_faith | 140 | 40 |
+| research | red_teaming | 7 | 2 |
+| writing | good_faith | 51 | 14 |
+| writing | red_teaming | 91 | 26 |
+| all | | 525 | 150 |
+
+Harbor side, from this directory:
+
+```bash
+uv run healthbench-professional --split parity --oracle-dir <dir> \
+  --output-dir datasets/healthbench-professional-parity
+harbor run -c healthbench-professional_parity.yaml
+```
 
 | Agent | Model | Metric | Number of Runs | Dataset Size | Original Benchmark Performance | Harbor Adapter Performance |
 |---|---|---|---|---|---|---|
-| pending | pending | length-adjusted score | 3 | 150 (proposed) | pending | pending |
+| claude-code | claude-sonnet-5-5 | length-adjusted score | 3 | 150 (29% of 525) | pending | pending |
 
 Checks so far:
 
