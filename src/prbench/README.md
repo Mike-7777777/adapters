@@ -102,8 +102,11 @@ harbor run -c prbench_parity.yaml
 
 Checks so far, none of which call a model:
 
+- Harbor 0.25.0, all 1,100 tasks, oracle agent with `ORACLE_MODE=true`: 1,100 trials, 0 exceptions, reward 1.0 on every task.
+- Harbor 0.25.0, all 1,100 tasks, `nop` agent: 1,100 trials, 0 exceptions, reward 0 and `score` 0 on every task.
 - The ported functions (conversation building, rubric weights, judge prompt, verdict parsing, both scores) agree with the upstream code on all 1,100 records.
-- Harbor 0.25.0, 7 tasks, with a local stand-in for the judge endpoint: replies that quote every positive criterion reach reward 1.0, replies that quote only negative criteria get the expected negative `score` and reward 0, the `nop` agent gets 0, and `ORACLE_MODE=true` passes without a judge call.
+- Unmodified upstream `evals.py` (`final_response_source: prefilled`) and this grader, given the same replies and a deterministic local stand-in for the judge endpoint, produce identical task scores on all 1,100 tasks, and the 18,692 judge prompts are byte-identical on the two sides (with `--reference-texts omit`, the upstream behavior).
+- Harbor 0.25.0, 7 tasks, with the stand-in judge: the default oracle outline reaches reward 1.0 through the judge path, and replies that quote only negative criteria get the expected negative `score` and reward 0.
 
 ## Notes & Caveats
 
