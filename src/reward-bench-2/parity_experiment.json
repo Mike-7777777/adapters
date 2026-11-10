@@ -1,0 +1,26 @@
+[
+  {
+    "adapter_name": "reward-bench-2",
+    "agent": "<agent>@<version>",
+    "model": "<model>",
+    "date": "YYYY-MM-DD",
+    "adapted_benchmark_size": 1865,
+    "parity_benchmark_size": 302,
+    "number_of_runs": null,
+    "notes": "Pending. 302-task subset (parity_task_ids.txt): all 102 Ties tasks plus 40 tasks from each of the five best-of-4 subsets. Scores on both sides come from the official aggregation: accuracy per best-of-4 subset, the Ties score over the 51 ref/tied pairs, and their unweighted mean.",
+    "original_parity_repo": "https://github.com/Mike-7777777/reward-bench/tree/harbor-parity",
+    "adapter_pr": [],
+    "dataset_pr": [],
+    "parity_pr": [],
+    "metrics": [
+      {
+        "benchmark_name": "RewardBench 2",
+        "metric": "average over six subsets",
+        "original": "<mean +/- sample_SEM, e.g. 45.2% +/- 1.3%>",
+        "harbor": "<mean +/- sample_SEM, e.g. 44.8% +/- 1.1%>",
+        "original_runs": [],
+        "harbor_runs": []
+      }
+    ]
+  }
+]

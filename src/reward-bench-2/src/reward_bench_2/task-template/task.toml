@@ -1,0 +1,33 @@
+schema_version = "1.0"
+
+[task]
+name = "allenai/reward-bench-2__{task_id}"
+authors = [
+    { name = "Saumya Malik" },
+    { name = "Valentina Pyatkin" },
+    { name = "Sander Land" },
+    { name = "Jacob Morrison" },
+    { name = "Noah A. Smith" },
+    { name = "Hannaneh Hajishirzi" },
+    { name = "Nathan Lambert" },
+]
+keywords = ["reward-model", "llm-as-a-judge", "preference", "{subset_slug}"]
+
+[metadata]
+difficulty = "medium"
+category = "evaluation"
+subset = "{subset}"
+source_id = "{source_id}"
+protocol = "{protocol}"
+
+[verifier]
+timeout_sec = 120.0
+
+[agent]
+timeout_sec = 600.0
+
+[environment]
+build_timeout_sec = 600.0
+cpus = 1
+memory_mb = 2048
+storage_mb = 10240

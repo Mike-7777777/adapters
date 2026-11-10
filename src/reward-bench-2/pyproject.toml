@@ -1,0 +1,29 @@
+[project]
+name = "harbor-reward-bench-2-adapter"
+version = "0.1.0"
+description = "Harbor adapter for RewardBench 2 (allenai/reward-bench-2)"
+readme = "README.md"
+authors = [
+    { name = "Mike-7777777", email = "41225783+Mike-7777777@users.noreply.github.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "numpy>=2.0",
+    "pyarrow>=17.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.3",
+]
+
+[project.scripts]
+reward-bench-2 = "reward_bench_2.main:main"
+reward-bench-2-score = "reward_bench_2.score:main"
+
+[build-system]
+requires = ["uv_build>=0.11.14,<0.12.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "reward_bench_2"

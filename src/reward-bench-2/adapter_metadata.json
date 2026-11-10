@@ -1,0 +1,36 @@
+[
+  {
+    "adapter_name": "reward-bench-2",
+    "adapter_builders": [
+      "Qumeng Sun (41225783+Mike-7777777@users.noreply.github.com)"
+    ],
+    "original_benchmark": [
+      {
+        "split": "test",
+        "size": 1865,
+        "harness": "llm",
+        "supported_agents": [
+          "None"
+        ],
+        "adaptable": true,
+        "notes": "RewardBench 2 (Allen Institute for AI, arXiv 2506.01937): 1,763 best-of-4 rows in five subsets (Factuality 475, Precise IF 160, Math 183, Safety 450, Focus 495) and 102 Ties rows (51 ref/tied pairs). The generative harness (scripts/run_generative_v2.py) calls a model API directly, with no agent."
+      }
+    ],
+    "harbor_adapter": [
+      {
+        "split": "full",
+        "adapted_benchmark_size": 1865,
+        "parity_benchmark_size": 302,
+        "parity_sampling_rate": 0.1619,
+        "registry_benchmark_size": 1865,
+        "added_agents": [
+          "None"
+        ],
+        "parity_matching_agents": [],
+        "parity_unmatching_agents": [],
+        "parity_costs": null,
+        "notes": "Oracle passes on all 1,865 tasks (Harbor 0.25.0). Parity is planned on the 302-task subset (--split parity): all 102 Ties tasks plus 40 tasks from each best-of-4 subset. Parity runs have not started."
+      }
+    ]
+  }
+]
