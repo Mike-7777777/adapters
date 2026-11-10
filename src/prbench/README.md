@@ -1,0 +1,150 @@
+# PRBench → Harbor Adapter
+
+**Status: work in progress.** The generator, grader and task layout run end to end with a stand-in judge. Oracle replies and parity experiments are still to come; see [Notes & Caveats](#notes--caveats).
+
+## Overview
+
+This adapter turns the 1,100 public conversations of PRBench (600 Finance, 500 Legal) into Harbor tasks. Each task asks the agent to write the assistant's next reply to a professional finance or legal conversation; the verifier grades the reply against the expert-written weighted rubric with an LLM judge, using the grader prompt and scoring of the original harness.
+
+- Source: Hugging Face [`ScaleAI/PRBench`](https://huggingface.co/datasets/ScaleAI/PRBench), CC-BY-4.0, pinned to revision `01947c6e`.
+- Original harness: [scaleapi/PRBench](https://github.com/scaleapi/PRBench) `evals.py` (MIT); the original evaluation calls a model API directly, with no agent.
+- Adapted size: 1,100 tasks, every record of the `finance` and `legal` splits. The `finance_hard` (300) and `legal_hard` (250) splits are subsets of those records and are exposed as `--split` choices and a `hard` keyword, not as extra tasks.
+
+## What is PRBench?
+
+[PRBench](https://arxiv.org/abs/2511.11562) (Scale AI, 2025) evaluates open-ended professional reasoning in finance and law. Experts wrote 1,100 conversations (656 single-turn, 444 with 2 to 10 user turns) and 18,692 rubric criteria, 5 to 30 per task. Every criterion carries an integer weight from -10 to 10: positive for what a good reply does, negative for what it must not do.
+
+An LLM judge (`o4-mini` in the paper) decides whether each criterion is met. Task score = sum of met weights / sum of positive weights. The benchmark score, `mean_clipped` in the original code, is the mean task score floored at 0. The original code also reports a min-normalized score that shifts each task by its total negative weight.
+
+## Adapter Features
+
+- Upstream-faithful grading. `tests/grader.py` reuses the PRBench grader prompt verbatim, renders the conversation the same way, sends one judge call per criterion through the Responses API with no sampling parameters, parses verdicts with the upstream rule and computes both upstream scores. Checked against the upstream functions on all 1,100 records.
+- Three numbers per task in `reward.json`: `reward` (task score floored at 0), `score` (the unclipped task score the paper's metric averages) and `score_normalized`.
+- Multi-turn conversations and reference texts. Earlier turns, including the model replies stored in the dataset, are given to the agent in `/workspace/conversation.md`; reference texts are placed in front of the prompt of their turn.
+- The verifier grades from its own copy of the conversation and rubric (`tests/task.json`), so editing files under `/workspace` cannot change what is graded. The rubric is never placed where the agent can read it.
+- Pinned data: each parquet file is sha256-checked against the pinned revision before tasks are built.
+- Dataset canaries are kept: every task carries the `prbench:sample:...` canary strings of its record.
+
+## Generated Task Structure
+
+```
+<domain>-<task>/                  # e.g. finance-ea67e314b6c2e8fc70627c19
+├── task.toml                     # name scaleai/prbench__<domain>-<task>
+├── instruction.md                # asks for the next reply; holds the canaries
+├── environment/
+│   ├── Dockerfile                # copies conversation.md to /workspace
+│   └── conversation.md
+├── solution/solve.sh             # oracle reply (when generated with --oracle-dir)
+└── tests/
+    ├── test.sh
+    ├── grader.py
+    └── task.json                 # conversation, rubric with weights, canaries
+```
+
+The agent writes its reply to `/workspace/response.txt`.
+
+## Run Evaluation / Harness
+
+The verifier calls the judge through the OpenAI Responses API:
+
+```bash
+export OPENAI_API_KEY=...
+# optional: OPENAI_BASE_URL, JUDGE_MODEL (default o4-mini), JUDGE_REASONING_EFFORT
+# (default: not sent, as upstream), JUDGE_CONCURRENCY (default 8)
+harbor run -p datasets/prbench -a <agent> -m "<model>"
+```
+
+From the repository root with the reference config (oracle agent by default):
+
+```bash
+harbor run -c src/prbench/run_prbench.yaml
+```
+
+A single trial:
+
+```bash
+harbor trial start -p datasets/prbench/<task_id> -a <agent> -m "<model>"
+```
+
+One full grading pass is 18,692 judge calls (9,865 Finance, 8,827 Legal). The benchmark score is the mean of `score` over tasks, floored at 0; `reward` is already floored per task and averages slightly higher.
+
+## Usage: Create Task Directories
+
+```bash
+cd src/prbench
+uv run prbench --output-dir ../../datasets/prbench
+```
+
+Options: `--limit N`, `--task-ids ID ...`, `--overwrite`, `--split {full,finance,legal,finance_hard,legal_hard,hard,parity}`, `--source-dir DIR` (local copies of the pinned parquet files; their sha256 is still checked), `--oracle-dir DIR` (`<task_id>.txt` oracle replies for `solution/solve.sh`), `--reference-texts {prepend,omit}`.
+
+Unit tests: `uv run pytest tests`.
+
+## Comparison with Original Benchmark (Parity)
+
+Pending; the plan below is a proposal until agreed with the Harbor team. Scenario 2: the original harness has no agent, so a fork of scaleapi/PRBench gets a runner that produces each reply with the same agent, instruction and `conversation.md` as the Harbor task, then grades the replies through the original `evals.py` with `final_response_source: prefilled`. Both sides use the same judge model. Benchmark score on each side: the mean unclipped task score, floored at 0 after averaging.
+
+**Parity subset.** `--split parity` generates the 200 tasks listed in `src/prbench/parity_task_ids.txt`, 100 per domain, which the original side reads too. Within a domain the subset is stratified by hard-subset membership and topic: each stratum gets seats in proportion to its size (largest remainder), and within a stratum records are taken in sha256 order of `<domain>-<task>`. `select_parity_keys` in `adapter.py` reproduces the list, and generation stops if the two differ.
+
+Harbor side, from this directory:
+
+```bash
+uv run prbench --split parity --output-dir ../../datasets/prbench-parity
+harbor run -c prbench_parity.yaml
+```
+
+| Agent | Model | Metric | Number of Runs | Dataset Size | Original Benchmark Performance | Harbor Adapter Performance |
+|---|---|---|---|---|---|---|
+| pending | pending | mean_clipped | 3 | 200 (18% of 1,100) | pending | pending |
+
+Checks so far, none of which call a model:
+
+- The ported functions (conversation building, rubric weights, judge prompt, verdict parsing, both scores) agree with the upstream code on all 1,100 records.
+- Harbor 0.25.0, 7 tasks, with a local stand-in for the judge endpoint: replies that quote every positive criterion reach reward 1.0, replies that quote only negative criteria get the expected negative `score` and reward 0, the `nop` agent gets 0, and `ORACLE_MODE=true` passes without a judge call.
+
+## Notes & Caveats
+
+**Judge model.** The paper's judge, `o4-mini`, was shut down on the OpenAI API on 2026-10-23 ([deprecations](https://developers.openai.com/api/docs/deprecations); OpenAI names `gpt-5.6-terra` as the replacement). The default stays `o4-mini` because results are only comparable with the paper under that judge and it may still be served by other providers; set `JUDGE_MODEL` otherwise. The paper reports similar agreement with human experts for `o4-mini` and `gpt-4.1` (Cohen's kappa 0.603 and 0.605).
+
+**Reward range.** A task score can be negative when negative criteria are met (down to -0.74 on the worst task). The paper floors only the mean over tasks; `reward` floors each task so it stays in [0, 1], and `score` keeps the unclipped value for the paper's metric.
+
+**Reference texts.** 17 tasks (15 Finance, 2 Legal) come with reference texts. The paper says they are prepended to the prompt. Upstream commit `7b2df0a` does not actually prepend them: `process_reference_texts` tests `isinstance(value, list)`, and the column arrives as a NumPy array (verified with `datasets` 5.2.0 and `pandas` 3.1.1). This adapter follows the paper; `--reference-texts omit` reproduces the upstream behavior, and the parity fork carries the one-line fix.
+
+**Judge failures.** Upstream counts a criterion as not met when the judge call still fails after five attempts. Here the verifier exits non-zero instead, so Harbor records a verifier error rather than a lowered score. Unparseable judge output counts as not met, as upstream.
+
+**Oracle solutions.** The dataset has no reference answers: the last turn of every record has no reply, and the `scratchpad` field holds expert notes, not an answer. Oracle replies are to be written against each rubric with AI assistance and passed in with `--oracle-dir`; they are AI-written text, not dataset records. With about 17 criteria per task, a full score needs every criterion judged as intended, so a small share of tasks can fall below 1.0 on any single judge pass. `ORACLE_MODE=true` (the approach of the `clbench` adapter) checks the pipeline without the judge: the task data loads and the oracle reply is written and non-empty.
+
+**Earlier turns.** In multi-turn tasks the earlier assistant turns are replies of the models the experts talked to (`mistral-medium-latest`, `deepseek-v3p1`, `gpt-oss-20b`), exactly as stored in the dataset. One Finance record (`d6f0165d275fdd3b4f9f87bc`) lists 5 turns and holds 4 prompts; it is kept as stored.
+
+**Web access.** The paper's main results are without web search. Harbor agents can browse unless the environment forbids it.
+
+**One adapter or two.** The adapter list has separate rows for PRBench Finance and PRBench Legal. `ADAPTER_NAME` and `DOMAINS` at the top of `adapter.py` are the only places that fix the layout; with a single domain in `DOMAINS`, task directories drop the domain prefix (`scaleai/prbench-legal__<task>`), and the parity list is already per domain.
+
+## Installation / Prerequisites
+
+- Docker, and Harbor 0.25 or later (Harbor 0.25 clears `reward.json` before each verification).
+- Network access when generating tasks (Hugging Face) and at verification time (PyPI for the `openai` package, and the judge endpoint).
+- An API key for the judge model.
+
+## Troubleshooting
+
+- `sha256 mismatch`: the downloaded file differs from the pinned revision; check `HF_ENDPOINT` or the `--source-dir` files.
+- `download failed after 3 attempts`: Hugging Face is unreachable; set `HF_ENDPOINT` to a mirror or pass `--source-dir`.
+- Verifier error with `judge failed after 5 attempts`: the judge endpoint kept failing; check `OPENAI_BASE_URL`, `JUDGE_MODEL` and the key.
+- `no oracle reply was generated for this task`: the task was generated without `--oracle-dir`.
+- `task ids not in split`: `--task-ids` takes generated task ids such as `finance-<task>`, and they must belong to the chosen `--split`.
+
+## Citation
+
+```bibtex
+@misc{akyurek2025prbench,
+  title         = {PRBench: Large-Scale Expert Rubrics for Evaluating High-Stakes Professional Reasoning},
+  author        = {Aky{\"u}rek, Afra Feyza and Gosai, Advait and Zhang, Chen Bo Calvin and Gupta, Vipul and Jeong, Jaehwan and Gunjal, Anisha and Rabbani, Tahseen and Mazzone, Maria and Randolph, David and Meymand, Mohammad Mahmoudi and Chattha, Gurshaan and Rodriguez, Paula and Mares, Diego and Singh, Pavit and Liu, Michael and Chawla, Subodh and Cline, Pete and Ogaz, Lucy and Hernandez, Ernesto and Wang, Zihao and Bhatter, Pavi and Ayestaran, Marcos and Liu, Bing and He, Yunzhong},
+  year          = {2025},
+  eprint        = {2511.11562},
+  archivePrefix = {arXiv}
+}
+```
+
+## Authors & Contributions
+
+Adapter: Qumeng Sun (@Mike-7777777). Issues and questions: open an issue or ask in `#adapters-spam` on the Harbor Discord.

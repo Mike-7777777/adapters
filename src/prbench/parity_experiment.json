@@ -1,0 +1,26 @@
+[
+  {
+    "adapter_name": "prbench",
+    "agent": "<agent>@<version>",
+    "model": "<model>",
+    "date": "YYYY-MM-DD",
+    "adapted_benchmark_size": 1100,
+    "parity_benchmark_size": 200,
+    "number_of_runs": null,
+    "notes": "Not run yet. 200-task subset, 100 per domain, stratified by hard-subset membership and topic (parity_task_ids.txt); the same judge model on both sides.",
+    "original_parity_repo": null,
+    "adapter_pr": [],
+    "dataset_pr": [],
+    "parity_pr": [],
+    "metrics": [
+      {
+        "benchmark_name": "PRBench",
+        "metric": "mean_clipped",
+        "original": "<mean +/- sample_SEM, e.g. 45.2% +/- 1.3%>",
+        "harbor": "<mean +/- sample_SEM, e.g. 44.8% +/- 1.1%>",
+        "original_runs": [],
+        "harbor_runs": []
+      }
+    ]
+  }
+]

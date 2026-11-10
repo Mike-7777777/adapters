@@ -1,0 +1,25 @@
+# Parity runs on the 200-task subset. Agent and model are a proposal until
+# agreed with the Harbor team.
+#   uv run prbench --split parity --output-dir ../../datasets/prbench-parity
+#   harbor run -c prbench_parity.yaml
+# The judge comes from task.toml (JUDGE_MODEL, default o4-mini) and reads
+# OPENAI_API_KEY / OPENAI_BASE_URL from the host environment.
+jobs_dir: jobs
+n_attempts: 1
+timeout_multiplier: 1.0
+orchestrator:
+  type: local
+  n_concurrent_trials: 4
+  quiet: false
+environment:
+  type: docker
+  force_build: true
+  delete: true
+  env:
+    ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+    ANTHROPIC_BASE_URL: ${ANTHROPIC_BASE_URL}
+agents:
+  - name: claude-code
+    model_name: anthropic/claude-sonnet-5-5
+datasets:
+  - path: datasets/prbench-parity

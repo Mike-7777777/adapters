@@ -1,0 +1,58 @@
+schema_version = "1.0"
+
+[task]
+name = "scaleai/{adapter_name}__{task_id}"
+authors = [
+    { name = "Afra Feyza Akyürek" },
+    { name = "Advait Gosai" },
+    { name = "Chen Bo Calvin Zhang" },
+    { name = "Vipul Gupta" },
+    { name = "Jaehwan Jeong" },
+    { name = "Anisha Gunjal" },
+    { name = "Tahseen Rabbani" },
+    { name = "Maria Mazzone" },
+    { name = "David Randolph" },
+    { name = "Mohammad Mahmoudi Meymand" },
+    { name = "Gurshaan Chattha" },
+    { name = "Paula Rodriguez" },
+    { name = "Diego Mares" },
+    { name = "Pavit Singh" },
+    { name = "Michael Liu" },
+    { name = "Subodh Chawla" },
+    { name = "Pete Cline" },
+    { name = "Lucy Ogaz" },
+    { name = "Ernesto Hernandez" },
+    { name = "Zihao Wang" },
+    { name = "Pavi Bhatter" },
+    { name = "Marcos Ayestaran" },
+    { name = "Bing Liu" },
+    { name = "Yunzhong He" },
+]
+keywords = {keywords}
+
+[metadata]
+difficulty = "{difficulty}"
+category = "{domain}"
+source_id = "{source_id}"
+topic = {topic}
+turns = {turns}
+hard_subset = {hard}
+
+[verifier]
+timeout_sec = 1800.0
+
+[verifier.env]
+OPENAI_API_KEY = "${OPENAI_API_KEY}"
+OPENAI_BASE_URL = "${OPENAI_BASE_URL:-https://api.openai.com/v1}"
+JUDGE_MODEL = "${JUDGE_MODEL:-o4-mini}"
+JUDGE_REASONING_EFFORT = "${JUDGE_REASONING_EFFORT:-}"
+JUDGE_CONCURRENCY = "${JUDGE_CONCURRENCY:-8}"
+ORACLE_MODE = "${ORACLE_MODE:-}"
+
+[agent]
+timeout_sec = 1800.0
+
+[environment]
+build_timeout_sec = 600.0
+cpus = 1
+memory_mb = 2048
