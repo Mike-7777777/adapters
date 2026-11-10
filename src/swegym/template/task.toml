@@ -1,5 +1,7 @@
+version = "1.0"
+
 [task]
-name = "swe-gym/swe-gym__{instance_id}"
+name = "swe-gym/swe-gym__{task_id}"
 authors = [
     { name = "Jiayi Pan", email = "jypan@berkeley.edu" },
     { name = "Xingyao Wang" },

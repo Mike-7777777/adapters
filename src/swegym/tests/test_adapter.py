@@ -34,7 +34,9 @@ def test_task_config_names_the_dockerfile_image(
     task_dir = converter.generate_task(INSTANCE_ID, INSTANCE_ID.lower())
 
     config = tomllib.loads((task_dir / "task.toml").read_text())
-    assert config["task"]["name"] == f"swe-gym/swe-gym__{INSTANCE_ID}"
+    assert config["version"] == "1.0"
+    # Registry names are lower case (docs/adapters.mdx, Naming rules).
+    assert config["task"]["name"] == f"swe-gym/swe-gym__{INSTANCE_ID.lower()}"
     assert config["task"]["authors"][0]["name"] == "Jiayi Pan"
     environment = config["environment"]
     assert environment["docker_image"] == IMAGE

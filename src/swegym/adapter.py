@@ -182,6 +182,8 @@ class SWEGymToHarbor:
         cfg = render_literal(
             cfg_tpl,
             instance_id=rec.instance_id,
+            # Registry task names are lower case.
+            task_id=rec.instance_id.lower(),
             difficulty=rec.difficulty or "hard",
             max_timeout=str(int(self.max_timeout)),
             docker_image=docker_image,
