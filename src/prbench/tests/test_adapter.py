@@ -329,7 +329,9 @@ class FakeJudge:
         reply = input.split("# Conversation\n")[1].split("\n\n# Rubric item")[0]
         met = item in reply.rsplit("assistant: ", 1)[-1]
         text = json.dumps({"explanation": "fake", "criteria_met": met}, indent=2)
-        return types.SimpleNamespace(output_text=f"```json\n{text}\n```")
+        return types.SimpleNamespace(
+            output_text=f"```json\n{text}\n```", model=f"{model}-snapshot"
+        )
 
 
 @pytest.fixture
@@ -370,8 +372,9 @@ def test_full_score_when_every_positive_criterion_is_met(graded_task):
     assert "<think>" not in prompt
     # Upstream sends the judge no sampling or reasoning parameters.
     assert graded_task.judge.kwargs[0] == {"model": "o4-mini"}
-    items = json.loads(graded_task.grading.read_text())["items"]
-    assert [i["criteria_met"] for i in items] == [True, True, False]
+    grading = json.loads(graded_task.grading.read_text())
+    assert [i["criteria_met"] for i in grading["items"]] == [True, True, False]
+    assert grading["judge_model_reported"] == ["o4-mini-snapshot"]
 
 
 def test_negative_score_keeps_its_sign_in_score_and_floors_in_reward(graded_task):
@@ -391,6 +394,12 @@ def test_empty_response_scores_zero_without_calling_the_judge(graded_task):
     assert rewards["reward"] == 0.0 and rewards["score"] == 0.0
     assert rewards["score_normalized"] == pytest.approx(6 / 18)
     assert graded_task.judge.prompts == []
+
+
+def test_reply_that_is_not_utf8_is_still_graded(graded_task):
+    graded_task.response.write_bytes(b"mentions X \xff\xfe and mentions Y")
+    assert grader.main() == 0
+    assert json.loads(graded_task.reward.read_text())["reward"] == 1.0
 
 
 def test_judge_model_and_effort_come_from_the_environment(graded_task, monkeypatch):

@@ -125,14 +125,18 @@ def write_reward(rewards: dict[str, float], details: dict) -> None:
     (LOG_DIR / "grading.json").write_text(json.dumps(details, indent=2))
 
 
-def judge(client, model: str, effort: str, prompt: str) -> tuple[str, int]:
-    """One judge call with upstream's retry count and backoff."""
+def judge(client, model: str, effort: str, prompt: str) -> tuple[str, int, str]:
+    """One judge call with upstream's retry count and backoff.
+
+    Returns the judge's text, the attempt that produced it and the model name
+    the endpoint reported.
+    """
     kwargs = {"reasoning": {"effort": effort}} if effort else {}
     for attempt in range(1, MAX_RETRIES + 1):
         try:
             out = client.responses.create(model=model, input=prompt, **kwargs)
             if out.output_text:
-                return out.output_text, attempt
+                return out.output_text, attempt, getattr(out, "model", None) or model
             error = "empty judge output"
         except Exception as exc:  # noqa: BLE001 - retried, then reported
             error = f"{type(exc).__name__}: {exc}"
@@ -144,7 +148,13 @@ def judge(client, model: str, effort: str, prompt: str) -> tuple[str, int]:
 def main() -> int:
     record = json.loads(TASK_PATH.read_text())
     weights = [item["weight"] for item in record["rubric"]]
-    response = RESPONSE_PATH.read_text() if RESPONSE_PATH.is_file() else ""
+    # Bytes that are not UTF-8 are replaced, so a malformed reply is still a
+    # reply and gets graded.
+    response = (
+        RESPONSE_PATH.read_text(encoding="utf-8", errors="replace")
+        if RESPONSE_PATH.is_file()
+        else ""
+    )
     response = remove_thinking_tags(response)
     if not response:
         zero = score_task([False] * len(weights), weights)
@@ -184,7 +194,7 @@ def main() -> int:
         print(exc, file=sys.stderr)
         return 1
 
-    verdicts = [get_criteria_met(text) for text, _ in outputs]
+    verdicts = [get_criteria_met(text) for text, _, _ in outputs]
     scores = score_task(verdicts, weights)
     write_reward(
         {"reward": max(0.0, scores["score"]), **scores},
@@ -192,6 +202,7 @@ def main() -> int:
             **scores,
             "response_chars": len(response),
             "judge_model": model,
+            "judge_model_reported": sorted({reported for _, _, reported in outputs}),
             "items": [
                 {
                     "id": item["id"],
@@ -200,7 +211,7 @@ def main() -> int:
                     "judge_output": text,
                     "attempts": attempts,
                 }
-                for item, met, (text, attempts) in zip(
+                for item, met, (text, attempts, _) in zip(
                     record["rubric"], verdicts, outputs
                 )
             ],

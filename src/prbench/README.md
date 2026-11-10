@@ -43,7 +43,13 @@ The agent writes its reply to `/workspace/response.txt`.
 
 ## Run Evaluation / Harness
 
-The verifier calls the judge through the OpenAI Responses API:
+Once the dataset is published to the registry:
+
+```bash
+harbor run -d scaleai/prbench -a <agent> -m "<model>"
+```
+
+From locally generated tasks. The verifier calls the judge through the OpenAI Responses API:
 
 ```bash
 export OPENAI_API_KEY=...
@@ -101,7 +107,7 @@ Checks so far, none of which call a model:
 
 ## Notes & Caveats
 
-**Judge model.** The paper's judge, `o4-mini`, was shut down on the OpenAI API on 2026-10-23 ([deprecations](https://developers.openai.com/api/docs/deprecations); OpenAI names `gpt-5.6-terra` as the replacement). The default stays `o4-mini` because results are only comparable with the paper under that judge and it may still be served by other providers; set `JUDGE_MODEL` otherwise. The paper reports similar agreement with human experts for `o4-mini` and `gpt-4.1` (Cohen's kappa 0.603 and 0.605).
+**Judge model.** The paper's judge, `o4-mini`, was shut down on the OpenAI API on 2026-10-23 ([deprecations](https://developers.openai.com/api/docs/deprecations); OpenAI names `gpt-5.6-terra` as the replacement). The default stays `o4-mini` because results are only comparable with the paper under that judge and it may still be served by other providers; set `JUDGE_MODEL` otherwise. `o4-mini` is the alias the original config uses; `grading.json` records the model name the endpoint reports, so parity runs can state the exact snapshot. The paper reports similar agreement with human experts for `o4-mini` and `gpt-4.1` (Cohen's kappa 0.603 and 0.605).
 
 **Reward range.** A task score can be negative when negative criteria are met (down to -0.74 on the worst task). The paper floors only the mean over tasks; `reward` floors each task so it stays in [0, 1], and `score` keeps the unclipped value for the paper's metric.
 
