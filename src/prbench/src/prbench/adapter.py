@@ -30,7 +30,6 @@ TEMPLATE_DIR = PACKAGE_DIR / "task-template"
 PARITY_IDS_FILE = PACKAGE_DIR / "parity_task_ids.txt"
 PARITY_SIZE_PER_DOMAIN = 100
 REFERENCE_TEXT_MODES = ("prepend", "omit")
-NO_ORACLE = 'echo "no oracle reply was generated for this task" >&2\nexit 1'
 SPLITS = (
     "full",
     "hard",
@@ -85,6 +84,20 @@ def render_conversation(messages: list[dict]) -> str:
     return "\n\n".join(
         f"===== {m['role'].upper()} (message {n} of {total}) =====\n\n{m['content']}"
         for n, m in enumerate(messages, 1)
+    )
+
+
+def rubric_outline(rubric: list[dict]) -> str:
+    """Default oracle reply: the positive criteria of the rubric, verbatim.
+
+    PRBench has no reference answers. This outline is what an ideal reply must
+    cover according to the rubric; a reply written for the task and passed in
+    with --oracle-dir takes its place.
+    """
+    points = "".join(f"- {item['title']}\n" for item in rubric if item["weight"] > 0)
+    return (
+        "Reference outline built from the positive criteria of this task's "
+        f"rubric:\n\n{points}\nEnd of outline.\n"
     )
 
 
@@ -192,11 +205,13 @@ class PRBenchAdapter:
             self._write_task(task)
         print(f"{len(tasks)} tasks in split {self.split!r} -> {self.output_dir}")
 
-    def _oracle_body(self, task_id: str) -> str:
-        reply = self.oracle_dir / f"{task_id}.txt" if self.oracle_dir else None
-        if not reply or not reply.is_file():
-            return NO_ORACLE
-        encoded = base64.b64encode(reply.read_bytes()).decode()
+    def _oracle_body(self, task_id: str, rubric: list[dict]) -> str:
+        written = self.oracle_dir / f"{task_id}.txt" if self.oracle_dir else None
+        if written and written.is_file():
+            reply = written.read_bytes()
+        else:
+            reply = rubric_outline(rubric).encode()
+        encoded = base64.b64encode(reply).decode()
         return f"mkdir -p /workspace\necho '{encoded}' | base64 -d > /workspace/response.txt"
 
     def _write_task(self, task: dict) -> None:
@@ -236,9 +251,10 @@ class PRBenchAdapter:
         (task_dir / "environment" / "conversation.md").write_text(
             render_conversation(messages) + "\n"
         )
+        rubric = dataset.rubric_items(row)
         solve = task_dir / "solution" / "solve.sh"
         solve.write_text(
-            fill(solve.read_text(), {"body": self._oracle_body(task["id"])})
+            fill(solve.read_text(), {"body": self._oracle_body(task["id"], rubric)})
         )
         record = {
             "task_id": task["id"],
@@ -246,7 +262,7 @@ class PRBenchAdapter:
             "domain": task["domain"],
             "canaries": task["canaries"],
             "messages": messages,
-            "rubric": dataset.rubric_items(row),
+            "rubric": rubric,
         }
         (task_dir / "tests" / "task.json").write_text(
             json.dumps(record, indent=2, ensure_ascii=False) + "\n"

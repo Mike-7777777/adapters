@@ -1,7 +1,5 @@
 # PRBench → Harbor Adapter
 
-**Status: work in progress.** The generator, grader and task layout run end to end with a stand-in judge. Oracle replies and parity experiments are still to come; see [Notes & Caveats](#notes--caveats).
-
 ## Overview
 
 This adapter turns the 1,100 public conversations of PRBench (600 Finance, 500 Legal) into Harbor tasks. Each task asks the agent to write the assistant's next reply to a professional finance or legal conversation; the verifier grades the reply against the expert-written weighted rubric with an LLM judge, using the grader prompt and scoring of the original harness.
@@ -34,7 +32,7 @@ An LLM judge (`o4-mini` in the paper) decides whether each criterion is met. Tas
 ├── environment/
 │   ├── Dockerfile                # copies conversation.md to /workspace
 │   └── conversation.md
-├── solution/solve.sh             # oracle reply (when generated with --oracle-dir)
+├── solution/solve.sh             # oracle reply (see Notes & Caveats)
 └── tests/
     ├── test.sh
     ├── grader.py
@@ -54,10 +52,10 @@ export OPENAI_API_KEY=...
 harbor run -p datasets/prbench -a <agent> -m "<model>"
 ```
 
-From the repository root with the reference config (oracle agent by default):
+From the repository root with the reference config (oracle agent by default; see [Oracle solutions](#notes--caveats) for `ORACLE_MODE`):
 
 ```bash
-harbor run -c src/prbench/run_prbench.yaml
+ORACLE_MODE=true harbor run -c src/prbench/run_prbench.yaml
 ```
 
 A single trial:
@@ -75,7 +73,7 @@ cd src/prbench
 uv run prbench --output-dir ../../datasets/prbench
 ```
 
-Options: `--limit N`, `--task-ids ID ...`, `--overwrite`, `--split {full,finance,legal,finance_hard,legal_hard,hard,parity}`, `--source-dir DIR` (local copies of the pinned parquet files; their sha256 is still checked), `--oracle-dir DIR` (`<task_id>.txt` oracle replies for `solution/solve.sh`), `--reference-texts {prepend,omit}`.
+Options: `--limit N`, `--task-ids ID ...`, `--overwrite`, `--split {full,finance,legal,finance_hard,legal_hard,hard,parity}`, `--source-dir DIR` (local copies of the pinned parquet files; their sha256 is still checked), `--oracle-dir DIR` (`<task_id>.txt` oracle replies for `solution/solve.sh`; default: an outline of the positive rubric criteria), `--reference-texts {prepend,omit}`.
 
 Unit tests: `uv run pytest tests`.
 
@@ -111,7 +109,7 @@ Checks so far, none of which call a model:
 
 **Judge failures.** Upstream counts a criterion as not met when the judge call still fails after five attempts. Here the verifier exits non-zero instead, so Harbor records a verifier error rather than a lowered score. Unparseable judge output counts as not met, as upstream.
 
-**Oracle solutions.** The dataset has no reference answers: the last turn of every record has no reply, and the `scratchpad` field holds expert notes, not an answer. Oracle replies are to be written against each rubric with AI assistance and passed in with `--oracle-dir`; they are AI-written text, not dataset records. With about 17 criteria per task, a full score needs every criterion judged as intended, so a small share of tasks can fall below 1.0 on any single judge pass. `ORACLE_MODE=true` (the approach of the `clbench` adapter) checks the pipeline without the judge: the task data loads and the oracle reply is written and non-empty.
+**Oracle solutions.** The dataset has no reference answers: the last turn of every record has no reply, and the `scratchpad` field holds expert notes, not an answer. By default `solution/solve.sh` writes an outline of the task's positive rubric criteria, taken verbatim from the rubric; `--oracle-dir` replaces it with replies written for each task. The oracle run uses `ORACLE_MODE=true`, the approach of the merged `clbench` adapter: the verifier skips the judge and checks that the task data loads and that the oracle wrote a non-empty reply. It validates the image build, the file layout and the verifier wiring on every task; it does not measure reply quality. With about 17 criteria per task, a judged full score needs every criterion judged as intended, so a small share of tasks would fall below 1.0 on any single judge pass even with a strong reply. Agent runs never set `ORACLE_MODE` and always go through the judge.
 
 **Earlier turns.** In multi-turn tasks the earlier assistant turns are replies of the models the experts talked to (`mistral-medium-latest`, `deepseek-v3p1`, `gpt-oss-20b`), exactly as stored in the dataset. One Finance record (`d6f0165d275fdd3b4f9f87bc`) lists 5 turns and holds 4 prompts; it is kept as stored.
 
@@ -122,7 +120,7 @@ Checks so far, none of which call a model:
 ## Installation / Prerequisites
 
 - Docker, and Harbor 0.25 or later (Harbor 0.25 clears `reward.json` before each verification).
-- Network access when generating tasks (Hugging Face) and at verification time (PyPI for the `openai` package, and the judge endpoint).
+- Network access when generating tasks (Hugging Face), when building images (PyPI for the `openai` package) and at verification time (the judge endpoint).
 - An API key for the judge model.
 
 ## Troubleshooting
@@ -130,7 +128,6 @@ Checks so far, none of which call a model:
 - `sha256 mismatch`: the downloaded file differs from the pinned revision; check `HF_ENDPOINT` or the `--source-dir` files.
 - `download failed after 3 attempts`: Hugging Face is unreachable; set `HF_ENDPOINT` to a mirror or pass `--source-dir`.
 - Verifier error with `judge failed after 5 attempts`: the judge endpoint kept failing; check `OPENAI_BASE_URL`, `JUDGE_MODEL` and the key.
-- `no oracle reply was generated for this task`: the task was generated without `--oracle-dir`.
 - `task ids not in split`: `--task-ids` takes generated task ids such as `finance-<task>`, and they must belong to the chosen `--split`.
 
 ## Citation

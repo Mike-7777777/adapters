@@ -64,7 +64,8 @@ def main() -> None:
         "--oracle-dir",
         type=Path,
         default=None,
-        help="Directory of <task_id>.txt oracle replies for solution/solve.sh",
+        help="Directory of <task_id>.txt oracle replies for solution/solve.sh "
+        "(default: an outline of the positive rubric criteria)",
     )
     parser.add_argument(
         "--reference-texts",

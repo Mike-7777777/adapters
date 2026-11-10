@@ -180,20 +180,28 @@ def test_task_ids_limit_and_overwrite(tmp_path, fake_data):
     assert not marker.exists()
 
 
+def run_solve(task_dir: Path, workspace: Path) -> str:
+    script = (task_dir / "solution" / "solve.sh").read_text()
+    script = script.replace("/workspace", str(workspace))
+    subprocess.run(["bash", "-c", script], check=True)
+    return (workspace / "response.txt").read_text()
+
+
 def test_oracle_reply_round_trips_through_solve_sh(tmp_path, fake_data):
     oracle_dir = tmp_path / "oracle"
     oracle_dir.mkdir()
     reply = "It's a reply with 'quotes', $VARS and\nnew lines — ünïcode.\n"
     (oracle_dir / "finance-f1.txt").write_text(reply)
     out = generate(tmp_path, oracle_dir=oracle_dir)
-    script = (out / "finance-f1" / "solution" / "solve.sh").read_text()
-    workspace = tmp_path / "workspace"
-    script = script.replace("/workspace", str(workspace))
-    subprocess.run(["bash", "-c", script], check=True)
-    assert (workspace / "response.txt").read_text() == reply
-    missing = (out / "finance-f2" / "solution" / "solve.sh").read_text()
-    failed = subprocess.run(["bash", "-c", missing], check=False, capture_output=True)
-    assert failed.returncode == 1
+    assert run_solve(out / "finance-f1", tmp_path / "w1") == reply
+
+
+def test_default_oracle_is_an_outline_of_the_positive_criteria(tmp_path, fake_data):
+    out = generate(tmp_path)
+    reply = run_solve(out / "finance-f2", tmp_path / "w2")
+    assert "- mentions X\n- mentions Y\n" in reply
+    assert "invents a statute" not in reply
+    assert reply.endswith("End of outline.\n")
 
 
 def strata_tasks(sizes: dict[tuple[bool, str], int]) -> list[dict]:

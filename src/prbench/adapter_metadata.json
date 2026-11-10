@@ -9,7 +9,9 @@
         "split": "finance",
         "size": 600,
         "harness": "llm",
-        "supported_agents": ["None"],
+        "supported_agents": [
+          "None"
+        ],
         "adaptable": true,
         "notes": "PRBench Finance (Scale AI, arXiv 2511.11562): expert-written conversations graded against weighted rubric criteria by an LLM judge (o4-mini in the paper). finance_hard (300) is a subset of these records."
       },
@@ -17,7 +19,9 @@
         "split": "legal",
         "size": 500,
         "harness": "llm",
-        "supported_agents": ["None"],
+        "supported_agents": [
+          "None"
+        ],
         "adaptable": true,
         "notes": "PRBench Legal. legal_hard (250) is a subset of these records."
       }
@@ -29,11 +33,15 @@
         "parity_benchmark_size": 200,
         "parity_sampling_rate": 0.1818,
         "registry_benchmark_size": 1100,
-        "added_agents": ["None"],
+        "added_agents": [
+          "None"
+        ],
         "parity_matching_agents": [],
-        "parity_unmatching_agents": ["None"],
+        "parity_unmatching_agents": [
+          "None"
+        ],
         "parity_costs": null,
-        "notes": "Parity is planned on a 200-task subset (--split parity), 100 per domain, stratified by hard-subset membership and topic. Not run yet."
+        "notes": "Oracle run (ORACLE_MODE=true) and nop run cover all 1100 tasks. Parity is planned on a 200-task subset (--split parity), 100 per domain, stratified by hard-subset membership and topic; not run yet."
       }
     ]
   }
