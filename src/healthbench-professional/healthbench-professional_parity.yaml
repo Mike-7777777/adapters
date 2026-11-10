@@ -21,5 +21,7 @@ environment:
 agents:
   - name: claude-code
     model_name: anthropic/claude-sonnet-5-5
+    kwargs:
+      version: "2.1.322"  # same Claude Code build as the simple-evals side
 datasets:
   - path: datasets/healthbench-professional-parity
