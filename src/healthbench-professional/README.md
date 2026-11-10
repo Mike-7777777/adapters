@@ -1,6 +1,6 @@
 # HealthBench Professional → Harbor Adapter
 
-**Status: work in progress.** The generator, grader and task layout run end to end locally. Oracle solutions for all tasks and parity experiments are still to come; see [Notes & Caveats](#notes--caveats).
+**Status: work in progress.** The generator, grader and task layout run end to end, and the oracle passes on all 525 tasks in Harbor 0.25.0. Parity experiments are still to come; see [Notes & Caveats](#notes--caveats).
 
 ## Overview
 
@@ -98,13 +98,13 @@ Checks so far:
 
 The default `both` keeps `reward` in [0, 1], as the guide requires of `test.sh`, and keeps the unclipped `score` that the paper's metric is computed from; Harbor averages each `reward.json` key separately. `unclipped` follows merged adapters whose original metric leaves [0, 1] (`sldbench`, `mlgym-bench`).
 
-**Oracle solutions.** Physician replies score 0.43 on average, so they cannot serve as the oracle. Oracle replies are written against each rubric with AI assistance and re-graded; 34 of 34 sampled tasks reached full score. They are passed in with `--oracle-dir` and embedded in each generated `solution/solve.sh`, which the agent never sees; they are AI-written text, not dataset records. The full set is uploaded with the parity results.
+**Oracle solutions.** Physician replies score 0.43 on average, so they cannot serve as the oracle. Oracle replies are written against each rubric with AI assistance, kept at or under 2000 characters so the length adjustment does not apply, and accepted only after three consecutive full-score gradings. In Harbor 0.25.0 all 525 reach reward 1.0. They are passed in with `--oracle-dir` and embedded in each generated `solution/solve.sh`, which the agent never sees; they are AI-written text, not dataset records. The full set is uploaded with the parity results.
 
 **Judge snapshot.** Results are only comparable with the paper under `gpt-5.4-2026-03-05`. The local checks above used a third-party endpoint that reports the model as `gpt-5.4` without a snapshot.
 
 ## Installation / Prerequisites
 
-- Docker, and Harbor 0.24 or later.
+- Docker, and Harbor 0.25 or later. Harbor 0.25 clears `reward.txt` and `reward.json` before each verification; 0.24 does not, and prefers a leftover `reward.json` over a fresh `reward.txt`.
 - Network access at build time (Hugging Face) and at verification time (Hugging Face and the judge endpoint).
 - An OpenAI API key with access to `gpt-5.4-2026-03-05`.
 
