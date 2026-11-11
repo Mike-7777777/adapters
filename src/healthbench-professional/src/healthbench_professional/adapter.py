@@ -115,7 +115,12 @@ class HealthBenchProfessionalAdapter:
             if not self.overwrite:
                 return
             shutil.rmtree(task_dir)
-        shutil.copytree(TEMPLATE_DIR, task_dir)
+        # Tests import the template's grader, which leaves bytecode caches there.
+        shutil.copytree(
+            TEMPLATE_DIR,
+            task_dir,
+            ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
+        )
         values = {
             "task_id": row["id"],
             "use_case": row["use_case"],
