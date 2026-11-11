@@ -1,0 +1,26 @@
+version = "1.0"
+
+[task]
+name = "quesma/{task_id}"
+authors = [{ name = {author_name}, email = {author_email} }]
+keywords = {keywords}
+
+[metadata]
+source = "QuesmaOrg/otel-bench"
+source_commit = "{source_commit}"
+source_id = "{task_id}"
+difficulty = {difficulty}
+category = {category}
+tags = {keywords}
+
+[verifier]
+timeout_sec = {verifier_timeout_sec}
+
+[agent]
+timeout_sec = {agent_timeout_sec}
+
+[environment]
+build_timeout_sec = {build_timeout_sec}
+cpus = {cpus}
+memory_mb = {memory_mb}
+storage_mb = {storage_mb}

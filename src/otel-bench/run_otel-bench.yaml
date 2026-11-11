@@ -1,0 +1,21 @@
+# Reference config for OTelBench. Oracle is the default; switch the agent block to
+# evaluate a model. The tasks download dependencies at build and test time, so the
+# environment needs outbound network access.
+jobs_dir: jobs
+n_attempts: 1
+timeout_multiplier: 1.0
+# The verifiers start services and wait for fixed intervals, and the tasks request
+# up to 4 CPUs each. Keep concurrency at or below (host cores / 4).
+n_concurrent_trials: 2
+environment:
+  type: docker
+  force_build: true
+  delete: true
+agents:
+  - name: oracle
+  # - name: terminus-2
+  #   model_name: anthropic/claude-opus-4-5-20251101
+  # - name: claude-code
+  #   model_name: anthropic/claude-haiku-4-5
+datasets:
+  - path: datasets/otel-bench

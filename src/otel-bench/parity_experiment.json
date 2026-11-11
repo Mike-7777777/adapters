@@ -1,0 +1,26 @@
+[
+  {
+    "adapter_name": "otel-bench",
+    "agent": "<agent>@<version>",
+    "model": "<model>",
+    "date": "YYYY-MM-DD",
+    "adapted_benchmark_size": 25,
+    "parity_benchmark_size": 25,
+    "number_of_runs": null,
+    "notes": "Pending. Both sides run on Harbor with identical instruction, environment and test files; the original side is QuesmaOrg/otel-bench at bb6e21a.",
+    "original_parity_repo": "https://github.com/QuesmaOrg/otel-bench",
+    "adapter_pr": [],
+    "dataset_pr": [],
+    "parity_pr": [],
+    "metrics": [
+      {
+        "benchmark_name": "OTelBench",
+        "metric": "pass rate",
+        "original": "<mean +/- sample_SEM>",
+        "harbor": "<mean +/- sample_SEM>",
+        "original_runs": [],
+        "harbor_runs": []
+      }
+    ]
+  }
+]
