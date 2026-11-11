@@ -220,7 +220,12 @@ class PRBenchAdapter:
             if not self.overwrite:
                 return
             shutil.rmtree(task_dir)
-        shutil.copytree(TEMPLATE_DIR, task_dir)
+        # Importing the template's grader (unit tests do) leaves a bytecode cache there.
+        shutil.copytree(
+            TEMPLATE_DIR,
+            task_dir,
+            ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
+        )
         row = task["row"]
         messages = dataset.build_messages(row, self.reference_texts)
         keywords = [

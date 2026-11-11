@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 import subprocess
 import sys
 import tomllib
@@ -178,6 +179,30 @@ def test_task_ids_limit_and_overwrite(tmp_path, fake_data):
     assert marker.exists()
     adapter_module.PRBenchAdapter(out, task_ids=["finance-f2"], overwrite=True).run()
     assert not marker.exists()
+
+
+def test_bytecode_caches_in_the_template_are_not_copied(
+    tmp_path, fake_data, monkeypatch
+):
+    template = tmp_path / "task-template"
+    shutil.copytree(
+        adapter_module.TEMPLATE_DIR,
+        template,
+        ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
+    )
+    cache = template / "tests" / "__pycache__"
+    cache.mkdir()
+    (cache / "grader.cpython-313.pyc").write_bytes(b"cache")
+    (template / "tests" / "stray.pyc").write_bytes(b"cache")
+    monkeypatch.setattr(adapter_module, "TEMPLATE_DIR", template)
+
+    out = generate(tmp_path, task_ids=["finance-f2"])
+
+    leaked = [
+        p for p in out.rglob("*") if p.name == "__pycache__" or p.suffix == ".pyc"
+    ]
+    assert leaked == []
+    assert (out / "finance-f2" / "tests" / "grader.py").is_file()
 
 
 def run_solve(task_dir: Path, workspace: Path) -> str:
