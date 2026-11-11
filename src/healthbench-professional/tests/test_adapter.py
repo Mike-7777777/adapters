@@ -13,6 +13,7 @@ sys.path.insert(0, str(PKG / "task-template" / "tests"))
 sys.path.insert(0, str(PKG))  # hbp_data.py, copied into tests/ at generation time
 
 import grader
+
 from healthbench_professional import adapter as adapter_module
 
 
