@@ -99,7 +99,7 @@ Unit tests: `uv run pytest tests`. Set `RB2_SOURCE` to a local copy of the parqu
 
 Parity runs have not started; agent, model and number of runs are to be agreed with the Harbor team.
 
-Planned setup (Scenario 2): a fork of allenai/reward-bench ([Mike-7777777/reward-bench@harbor-parity](https://github.com/Mike-7777777/reward-bench/tree/harbor-parity)) adds `scripts/run_generative_v2_agent.py`. It loads the data, draws the seed-0 answer positions, builds the four-way prompt, parses verdicts and computes the Ties score with the harness's own functions; the model call is replaced by the agent running in a container with the instruction text of the Harbor task. Proposed ramp-up: the same pinned agent version and model on both sides, a 10-task sanity check, one full run, then three runs per side on the parity subset.
+Planned setup (Scenario 2): a fork of [allenai/reward-bench](https://github.com/allenai/reward-bench), to be published with the parity runs, adds `scripts/run_generative_v2_agent.py`. It loads the data, draws the seed-0 answer positions, builds the four-way prompt, parses verdicts and computes the Ties score with the harness's own functions; the model call is replaced by the agent running in a container with the instruction text of the Harbor task. Proposed ramp-up: the same pinned agent version and model on both sides, a 10-task sanity check, one full run, then three runs per side on the parity subset.
 
 **Parity subset.** `--split parity` generates the 302 tasks listed in `src/reward_bench_2/parity_task_ids.txt`: all 102 Ties tasks, because the Ties score is defined over every ref/tied pair, and 40 tasks from each of the five best-of-4 subsets, taken in sha256(task id) order. `select_parity_ids` in `adapter.py` reproduces the list, and generation stops if the two differ.
 
@@ -113,7 +113,7 @@ Planned setup (Scenario 2): a fork of allenai/reward-bench ([Mike-7777777/reward
 | Ties | 102 | 102 |
 | all | 1,865 | 302 |
 
-Original side, from the fork (details in its `HARBOR_PARITY.md`):
+Original side, from the fork:
 
 ```bash
 uv sync
