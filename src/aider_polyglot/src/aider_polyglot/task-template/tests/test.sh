@@ -31,10 +31,10 @@ if [ "{language}" = "java" ]; then
         echo "systemProp.org.gradle.daemon=false" >> gradle/wrapper/gradle-wrapper.properties
     fi
 
-    # Remove @Disabled markers from tests
+    # Remove @Disabled(...) markers, with the pattern aider's harness uses
     if [ -d "$TEST_DIR" ]; then
         find "$TEST_DIR" -type f -name "*.java" -print0 \
-          | xargs -0 -I {{}} sed -i 's/@Disabled("Remove to run test")//g' "{{}}" || true
+          | xargs -0 -I {{}} sed -i -E 's/@Disabled\([^)]*\)//g' "{{}}" || true
     fi
 
     # Merge test sources and editor helpers into /app/src/**
