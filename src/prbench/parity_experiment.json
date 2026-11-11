@@ -9,7 +9,9 @@
     "number_of_runs": null,
     "notes": "Not run yet. 200-task subset, 100 per domain, stratified by hard-subset membership and topic (parity_task_ids.txt); the same judge model on both sides.",
     "original_parity_repo": null,
-    "adapter_pr": [],
+    "adapter_pr": [
+      "https://github.com/harbor-framework/adapters/pull/83"
+    ],
     "dataset_pr": [],
     "parity_pr": [],
     "metrics": [
