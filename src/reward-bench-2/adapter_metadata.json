@@ -29,7 +29,7 @@
         "parity_matching_agents": [],
         "parity_unmatching_agents": [],
         "parity_costs": null,
-        "notes": "Oracle passes on all 1,865 tasks (Harbor 0.25.0). Parity is planned on the 302-task subset (--split parity): all 102 Ties tasks plus 40 tasks from each best-of-4 subset. Parity runs have not started."
+        "notes": "Oracle passes on all 1,865 tasks (Harbor 0.25.0). Parity is planned on the 302-task subset (--split parity): all 102 Ties tasks plus 40 tasks from each best-of-4 subset. Parity runs have not started. Differences from the official harness: (1) Ties: the harness rates each response in a separate model call, here the agent rates all responses of a row in one session, so Ties scores and the average are not directly comparable with the leaderboard; (2) a missing or empty judgment.txt scores 0, where the harness gives 0.25 to a judge that returns nothing."
       }
     ]
   }
