@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import importlib.util
+import os
 import subprocess
 import sys
 import tomllib
@@ -129,10 +130,37 @@ def test_test_sh_rejects_missing_answer_file(tmp_path: Path) -> None:
     assert verify(tmp_path, "Paris", None) == "0"
 
 
-def test_test_sh_gives_0_when_the_scorer_fails(tmp_path: Path) -> None:
+@pytest.mark.parametrize("missing", ["gaia_scorer.py", "expected_answer.txt"])
+def test_test_sh_reports_an_error_when_it_cannot_grade(
+    tmp_path: Path, missing: str
+) -> None:
     task_dir, root = render_task(tmp_path, "Paris")
-    (task_dir / "tests" / "gaia_scorer.py").unlink()
+    (task_dir / "tests" / missing).unlink()
     (root / "app" / "answer.txt").write_text("Paris")
+    result = run_in_sandbox(task_dir / "tests" / "test.sh", root, check=False)
+    # No reward file and a non-zero exit: Harbor records a verifier error, not a 0.
+    assert result.returncode != 0
+    assert not (root / "logs" / "verifier" / "reward.txt").exists()
+
+
+@pytest.mark.skipif(os.geteuid() == 0, reason="root can read any file")
+def test_test_sh_rejects_an_unreadable_answer_file(tmp_path: Path) -> None:
+    task_dir, root = render_task(tmp_path, "Paris")
+    answer = root / "app" / "answer.txt"
+    answer.write_text("Paris")
+    answer.chmod(0)
+    run_in_sandbox(task_dir / "tests" / "test.sh", root)
+    assert reward(root) == "0"
+
+
+@pytest.mark.parametrize("module", ["json", "re", "string", "warnings"])
+def test_scorer_imports_ignore_other_files_in_tests(
+    tmp_path: Path, module: str
+) -> None:
+    task_dir, root = render_task(tmp_path, "Paris")
+    # A stray module next to the scorer must not replace the standard library's.
+    (task_dir / "tests" / f"{module}.py").write_text("import os\nos._exit(0)\n")
+    (root / "app" / "answer.txt").write_text("Lyon")
     run_in_sandbox(task_dir / "tests" / "test.sh", root)
     assert reward(root) == "0"
 
