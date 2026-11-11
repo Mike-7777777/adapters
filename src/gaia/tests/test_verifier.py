@@ -86,9 +86,11 @@ def render_task(tmp_path: Path, truth: str) -> tuple[Path, Path]:
     return task_dir, root
 
 
-def run_in_sandbox(script: Path, root: Path) -> None:
+def run_in_sandbox(
+    script: Path, root: Path, check: bool = True
+) -> subprocess.CompletedProcess[bytes]:
     """Run a rendered task script with its container paths moved under root."""
-    text = script.read_text()
+    text = script.read_text(encoding="utf-8")
     for container_path, host_path in (
         ("/logs/verifier", root / "logs" / "verifier"),
         ("/app/", f"{root / 'app'}/"),
@@ -96,7 +98,7 @@ def run_in_sandbox(script: Path, root: Path) -> None:
     ):
         text = text.replace(container_path, str(host_path))
     # check=True: test.sh must exit 0 whatever the verdict.
-    subprocess.run(["bash", "-c", text], check=True, timeout=60)
+    return subprocess.run(["bash", "-c", text], check=check, timeout=60)
 
 
 def reward(root: Path) -> str:
@@ -148,3 +150,29 @@ def test_task_toml_names_the_task_and_credits_the_gaia_authors(tmp_path: Path) -
     task = tomllib.loads((task_dir / "task.toml").read_text())["task"]
     assert task["name"] == "gaia-benchmark/gaia__stub"
     assert task["authors"][0]["name"] == "Grégoire Mialon"
+
+
+def test_generated_text_files_are_utf8(tmp_path: Path, monkeypatch) -> None:
+    # The verifier reads expected_answer.txt as UTF-8 whatever the generating
+    # machine's locale is.
+    real_write_text = Path.write_text
+
+    def ascii_unless_told(self, data, encoding=None, *args, **kwargs):
+        return real_write_text(self, data, encoding or "ascii", *args, **kwargs)
+
+    monkeypatch.setattr(Path, "write_text", ascii_unless_told)
+    task_dir, _ = render_task(tmp_path, "Malmö")
+    assert (task_dir / "tests" / "expected_answer.txt").read_bytes() == "Malmö".encode()
+
+
+def test_task_name_is_sanitized(tmp_path: Path) -> None:
+    record = {
+        "task_id": "My Task_01",
+        "Question": "Q?",
+        "Final answer": "x",
+        "Level": 1,
+    }
+    adapter = GAIAAdapter(output_dir=tmp_path / "tasks")
+    task_dir = adapter.generate_task(records_to_tasks([record], source_name="stub")[0])
+    task = tomllib.loads((task_dir / "task.toml").read_text(encoding="utf-8"))["task"]
+    assert task["name"] == "gaia-benchmark/gaia__my-task-01"

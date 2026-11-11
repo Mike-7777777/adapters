@@ -9,6 +9,7 @@ Source: https://huggingface.co/datasets/gaia-benchmark/GAIA
 
 from __future__ import annotations
 
+import re
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
@@ -52,7 +53,7 @@ class GAIAAdapter:
 
     def _render_template(self, template_path: Path, context: dict[str, Any]) -> str:
         """Render a template file with context variables."""
-        content = template_path.read_text()
+        content = template_path.read_text(encoding="utf-8")
         for key, value in context.items():
             content = content.replace(f"{{{key}}}", str(value))
         return content
@@ -86,18 +87,20 @@ class GAIAAdapter:
 
         # 1. Generate Dockerfile (with COPY for workspace if needed)
         dockerfile_content = self._generate_dockerfile(attachment_copied)
-        (task_dir / "environment" / "Dockerfile").write_text(dockerfile_content)
+        (task_dir / "environment" / "Dockerfile").write_text(
+            dockerfile_content, encoding="utf-8"
+        )
 
         # 2. Generate instruction.md
         question_with_attachment = task.question + attachment_info
         instruction = self._render_template(
             self.template_dir / "instruction.md", {"question": question_with_attachment}
         )
-        (task_dir / "instruction.md").write_text(instruction)
+        (task_dir / "instruction.md").write_text(instruction, encoding="utf-8")
 
         # 3. Generate task.toml with the task name and level metadata
-        task_toml = (self.template_dir / "task.toml").read_text()
-        task_toml = task_toml.replace("{task_id}", task.task_id.lower())
+        task_toml = (self.template_dir / "task.toml").read_text(encoding="utf-8")
+        task_toml = task_toml.replace("{task_id}", self._task_name(task.task_id))
         task_toml = task_toml.replace(
             'difficulty = "medium"',
             f'difficulty = "{self._level_to_difficulty(task.level)}"',
@@ -106,14 +109,14 @@ class GAIAAdapter:
             'tags = ["gaia", "tool-use", "web-browsing"]',
             f'tags = ["gaia", "level{task.level}", "tool-use"]',
         )
-        (task_dir / "task.toml").write_text(task_toml)
+        (task_dir / "task.toml").write_text(task_toml, encoding="utf-8")
 
         # 4. Generate solve.sh (Oracle solution)
         solve_sh = self._render_template(
             self.template_dir / "solution" / "solve.sh", {"answer": task.answer}
         )
         solve_path = task_dir / "solution" / "solve.sh"
-        solve_path.write_text(solve_sh)
+        solve_path.write_text(solve_sh, encoding="utf-8")
         solve_path.chmod(0o755)
 
         # 5. Copy test.sh, the vendored official scorer it runs, and create
@@ -123,13 +126,22 @@ class GAIAAdapter:
         (task_dir / "tests" / "test.sh").chmod(0o755)
 
         # Write expected answer for test verification
-        (task_dir / "tests" / "expected_answer.txt").write_text(task.answer)
+        (task_dir / "tests" / "expected_answer.txt").write_text(
+            task.answer, encoding="utf-8"
+        )
 
         return task_dir
 
+    @staticmethod
+    def _task_name(task_id: str) -> str:
+        """Registry-safe task name: lowercase, other characters become hyphens."""
+        return re.sub(r"[^a-z0-9]+", "-", task_id.lower()).strip("-")
+
     def _generate_dockerfile(self, has_attachment: bool) -> str:
         """Generate Dockerfile with optional workspace copy."""
-        base = (self.template_dir / "environment" / "Dockerfile").read_text()
+        base = (self.template_dir / "environment" / "Dockerfile").read_text(
+            encoding="utf-8"
+        )
         if has_attachment:
             base += """
 # Copy attached files
