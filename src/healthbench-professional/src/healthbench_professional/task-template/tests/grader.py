@@ -11,15 +11,10 @@ Copyright (c) 2024 OpenAI). Departures, all deliberate:
   (hbp_data.py, sha256-checked) rather than from files in the task, since the
   dataset asks that its examples not be republished in plain text.
 
-REWARD_MODE selects what the verifier writes (the paper clips only the mean
-over tasks to [0, 1], never a single task):
-
-- unclipped: reward.txt holds the length-adjusted task score, which
-  can be below 0 or above 1; the benchmark score is the mean, clipped.
-- both (default): reward.json holds a clipped "reward" and the unclipped
-  "score"; the benchmark score is the mean of "score", clipped.
-- clipped: reward.txt holds the task score clipped to [0, 1]; its mean is not
-  comparable with the paper.
+The verifier writes reward.json: "score" is the length-adjusted task score,
+which can be below 0 or above 1, and "reward" is that score clipped to [0, 1].
+The paper clips only the mean over tasks, so the benchmark score is the mean of
+"score", clipped.
 """
 
 from __future__ import annotations
@@ -39,7 +34,6 @@ LOG_DIR = Path("/logs/verifier")
 LENGTH_CENTER = 2000.0
 PENALTY_PER_500_CHARS = 0.0147
 MAX_ATTEMPTS = 4
-REWARD_MODES = ("unclipped", "both", "clipped")
 
 GRADER_TEMPLATE = """
 Your job is to look at a conversation and a rubric item, and score the last turn (i.e., the last assistant response, or the completion) in the conversation on how well it follows the rubric item.
@@ -101,29 +95,14 @@ def parse_json_to_dict(text: str) -> dict:
         return {}
 
 
-def write_reward(value: float, details: dict, mode: str) -> None:
+def write_reward(value: float, details: dict) -> None:
     LOG_DIR.mkdir(parents=True, exist_ok=True)
-    clipped = min(1.0, max(0.0, value))
-    if mode == "both":
-        rewards = {"reward": clipped, "score": value}
-        (LOG_DIR / "reward.json").write_text(json.dumps(rewards))
-    else:
-        (LOG_DIR / "reward.txt").write_text(
-            f"{clipped if mode == 'clipped' else value}\n"
-        )
-    (LOG_DIR / "grading.json").write_text(
-        json.dumps({"reward_mode": mode, **details}, indent=2)
-    )
+    rewards = {"reward": min(1.0, max(0.0, value)), "score": value}
+    (LOG_DIR / "reward.json").write_text(json.dumps(rewards))
+    (LOG_DIR / "grading.json").write_text(json.dumps(details, indent=2))
 
 
 def main() -> int:
-    mode = os.environ.get("REWARD_MODE") or "both"
-    if mode not in REWARD_MODES:
-        print(
-            f"REWARD_MODE must be one of {', '.join(REWARD_MODES)}, got {mode!r}",
-            file=sys.stderr,
-        )
-        return 1
     # A missing or empty reply is graded as "", as simple-evals grades whatever
     # its sampler returns.
     response = RESPONSE_PATH.read_text() if RESPONSE_PATH.is_file() else ""
@@ -191,7 +170,6 @@ def main() -> int:
             "grader_model": model,
             "items": graded,
         },
-        mode,
     )
     return 0
 

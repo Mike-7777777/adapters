@@ -21,7 +21,7 @@ An LLM judge (`gpt-5.4-2026-03-05`, reasoning low) decides whether each rubric i
 - Pointer-only tasks. The dataset README asks that examples not be shown in plain text online, so a task holds only its record id and the dataset canary. `hbp_data.py` fetches the data from the pinned revision and checks its sha256; a mismatch stops the build or the grading.
 - Tamper-resistant grading. The verifier fetches the conversation and rubric with its own copy of `hbp_data.py`, so editing files under `/workspace` cannot change what is graded.
 - Grader parity. `tests/grader.py` reuses the simple-evals grader prompt verbatim and its scoring (MIT, attribution in the file header). Unparseable judge output is retried a bounded number of times; after that the verifier exits non-zero instead of recording a score.
-- Selectable reward range (`REWARD_MODE`), see [Notes & Caveats](#notes--caveats).
+- Reward in [0, 1] plus the unclipped score, see [Notes & Caveats](#notes--caveats).
 
 ## Generated Task Structure
 
@@ -48,7 +48,7 @@ The verifier calls the judge through the OpenAI Responses API:
 
 ```bash
 export OPENAI_API_KEY=...
-# optional: OPENAI_BASE_URL, GRADER_MODEL (default gpt-5.4-2026-03-05), HF_ENDPOINT, HBP_REWARD_MODE
+# optional: OPENAI_BASE_URL, GRADER_MODEL (default gpt-5.4-2026-03-05), HF_ENDPOINT
 uv run harbor run -p datasets/healthbench-professional -a <agent> -m "<model>"
 ```
 
@@ -67,7 +67,7 @@ cd adapters/healthbench-professional
 uv run healthbench-professional --output-dir ../../datasets/healthbench-professional
 ```
 
-Options: `--limit N`, `--task-ids ID ...`, `--overwrite`, `--source PATH` (a local copy of the pinned file; its sha256 is still checked), `--oracle-dir DIR` (`<task_id>.txt` oracle replies for `solution/solve.sh`), `--reward-mode {unclipped,both,clipped}`, `--split {full,parity}` (`parity`: the 150-task parity subset).
+Options: `--limit N`, `--task-ids ID ...`, `--overwrite`, `--source PATH` (a local copy of the pinned file; its sha256 is still checked), `--oracle-dir DIR` (`<task_id>.txt` oracle replies for `solution/solve.sh`), `--split {full,parity}` (`parity`: the 150-task parity subset).
 
 Unit tests: `uv run pytest tests`.
 
@@ -106,19 +106,10 @@ Checks so far:
 - Physician reference replies, all 525, graded with this grader's prompt and scoring (judge `gpt-5.4`, reasoning low): length-adjusted mean 0.429; the paper reports 0.437 (section 5.1).
 - Harbor 0.24.0, 3 tasks: every per-item verdict from `test.sh` matched a direct call to the simple-evals code.
 - Pointer layout, 11 tasks with the oracle agent: the 10 tasks with a rubric-targeted oracle reply scored 1.0 before length adjustment; the generated task directories contain no dataset text.
-- Reward modes in Harbor 0.24.0: `unclipped` gives one `mean`; `both` gives separate means for `reward` and `score`; `HBP_REWARD_MODE` overrides the mode a task was generated with.
 
 ## Notes & Caveats
 
-**Reward range.** A task score can be below 0 (negative rubric items, long replies) or above 1 (the length adjustment adds a little for replies under 2000 characters). The paper clips only the mean over tasks to [0, 1]; clipping each task first moves the physician mean from 0.429 to 0.490. `REWARD_MODE` selects what the verifier writes; `--reward-mode` sets the default at generation time and `HBP_REWARD_MODE` overrides it at run time:
-
-| Mode | Verifier output | Benchmark score |
-|---|---|---|
-| `unclipped` | `reward.txt`: the task score | mean of `reward`, clipped to [0, 1] |
-| `both` (default) | `reward.json`: `reward` clipped to [0, 1], `score` unclipped | mean of `score`, clipped to [0, 1] |
-| `clipped` | `reward.txt`: the task score clipped to [0, 1] | mean of `reward`; not comparable with the paper |
-
-The default `both` keeps `reward` in [0, 1], as the guide requires of `test.sh`, and keeps the unclipped `score` that the paper's metric is computed from; Harbor averages each `reward.json` key separately. `unclipped` follows merged adapters whose original metric leaves [0, 1] (`sldbench`, `mlgym-bench`).
+**Reward range.** A task score can be below 0 (negative rubric items, long replies) or above 1 (the length adjustment adds a little for replies under 2000 characters). The paper clips only the mean over tasks to [0, 1]; clipping each task first moves the physician mean from 0.429 to 0.490. The verifier therefore writes `reward.json` with two keys: `reward`, the task score clipped to [0, 1] as the guide requires of `test.sh`, and `score`, the unclipped task score. Harbor averages each key separately; the benchmark score is the mean of `score`, clipped to [0, 1].
 
 **Oracle solutions.** Physician replies score 0.43 on average, so they cannot serve as the oracle. Oracle replies are written against each rubric with AI assistance, kept at or under 2000 characters so the length adjustment does not apply, and accepted only after three consecutive full-score gradings. In Harbor 0.25.0 all 525 reach reward 1.0. They are passed in with `--oracle-dir` and embedded in each generated `solution/solve.sh`, which the agent never sees; they are AI-written text, not dataset records. The full set is uploaded with the parity results.
 
@@ -126,7 +117,7 @@ The default `both` keeps `reward` in [0, 1], as the guide requires of `test.sh`,
 
 ## Installation / Prerequisites
 
-- Docker, and Harbor 0.25 or later. Harbor 0.25 clears `reward.txt` and `reward.json` before each verification; 0.24 does not, and prefers a leftover `reward.json` over a fresh `reward.txt`.
+- Docker, and Harbor 0.25 or later. Harbor 0.25 clears reward files before each verification; 0.24 does not.
 - Network access at build time (Hugging Face) and at verification time (Hugging Face and the judge endpoint).
 - An OpenAI API key with access to `gpt-5.4-2026-03-05`.
 

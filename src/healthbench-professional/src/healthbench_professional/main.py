@@ -9,7 +9,7 @@ in the Harbor format at the configured output directory.
 import argparse
 from pathlib import Path
 
-from .adapter import PARITY_SIZE, REWARD_MODES, SPLITS, HealthBenchProfessionalAdapter
+from .adapter import PARITY_SIZE, SPLITS, HealthBenchProfessionalAdapter
 
 # Default output dir: <repo>/datasets/<adapter_id>
 DEFAULT_OUTPUT_DIR = (
@@ -54,13 +54,6 @@ def main() -> None:
         help="Directory of <task_id>.txt oracle replies for solution/solve.sh",
     )
     parser.add_argument(
-        "--reward-mode",
-        choices=REWARD_MODES,
-        default="both",
-        help="Default REWARD_MODE written into task.toml (see tests/grader.py); "
-        "HBP_REWARD_MODE overrides it at run time",
-    )
-    parser.add_argument(
         "--split",
         choices=SPLITS,
         default="full",
@@ -76,7 +69,6 @@ def main() -> None:
         task_ids=args.task_ids,
         source=args.source,
         oracle_dir=args.oracle_dir,
-        reward_mode=args.reward_mode,
         split=args.split,
     )
 

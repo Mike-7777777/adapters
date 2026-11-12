@@ -25,33 +25,13 @@ def log_dir(tmp_path, monkeypatch):
     return tmp_path / "verifier"
 
 
-@pytest.mark.parametrize("value", [-0.3, 0.6, 1.02])
-def test_unclipped_writes_the_task_score(log_dir, value):
-    grader.write_reward(value, {}, "unclipped")
-    assert float((log_dir / "reward.txt").read_text()) == value
-    assert not (log_dir / "reward.json").exists()
-
-
 @pytest.mark.parametrize(("value", "clipped"), [(-0.3, 0.0), (0.6, 0.6), (1.02, 1.0)])
-def test_clipped_writes_the_score_in_unit_range(log_dir, value, clipped):
-    grader.write_reward(value, {}, "clipped")
-    assert float((log_dir / "reward.txt").read_text()) == clipped
-
-
-@pytest.mark.parametrize(("value", "clipped"), [(-0.3, 0.0), (1.02, 1.0)])
-def test_both_writes_clipped_reward_and_unclipped_score(log_dir, value, clipped):
-    grader.write_reward(value, {}, "both")
+def test_reward_json_holds_clipped_reward_and_unclipped_score(log_dir, value, clipped):
+    grader.write_reward(value, {})
     assert json.loads((log_dir / "reward.json").read_text()) == {
         "reward": clipped,
         "score": value,
     }
-    assert not (log_dir / "reward.txt").exists()
-
-
-def test_unknown_mode_fails_before_grading(log_dir, monkeypatch):
-    monkeypatch.setenv("REWARD_MODE", "clip")
-    assert grader.main() == 1
-    assert not log_dir.exists()
 
 
 @pytest.fixture
@@ -116,37 +96,6 @@ def fake_row(task_id: str) -> dict:
         "difficulty": "typical",
         "canary_string": "canary",
     }
-
-
-@pytest.mark.parametrize("mode", ["unclipped", "both", "clipped"])
-def test_adapter_writes_the_default_mode_into_task_toml(tmp_path, monkeypatch, mode):
-    monkeypatch.setattr(
-        adapter_module.hbp_data, "load_rows", lambda source=None: [fake_row("abc")]
-    )
-    adapter_module.HealthBenchProfessionalAdapter(tmp_path, reward_mode=mode).run()
-    toml = (tmp_path / "abc" / "task.toml").read_text()
-    assert f'REWARD_MODE = "${{HBP_REWARD_MODE:-{mode}}}"' in toml
-
-
-def test_adapter_defaults_to_both(tmp_path, monkeypatch):
-    monkeypatch.setattr(
-        adapter_module.hbp_data, "load_rows", lambda source=None: [fake_row("abc")]
-    )
-    adapter_module.HealthBenchProfessionalAdapter(tmp_path).run()
-    toml = (tmp_path / "abc" / "task.toml").read_text()
-    assert 'REWARD_MODE = "${HBP_REWARD_MODE:-both}"' in toml
-
-
-def test_grader_defaults_to_both(log_dir, judge, monkeypatch):
-    monkeypatch.delenv("REWARD_MODE", raising=False)
-    judge('{"criteria_met": false}')
-    assert grader.main() == 0
-    assert set(json.loads((log_dir / "reward.json").read_text())) == {"reward", "score"}
-
-
-def test_adapter_rejects_an_unknown_mode(tmp_path):
-    with pytest.raises(ValueError, match="reward_mode"):
-        adapter_module.HealthBenchProfessionalAdapter(tmp_path, reward_mode="clip")
 
 
 def test_bytecode_caches_stay_out_of_generated_tasks(tmp_path, monkeypatch):
