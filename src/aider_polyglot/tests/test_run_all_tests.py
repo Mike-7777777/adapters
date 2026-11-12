@@ -1,4 +1,4 @@
-"""Generation tests for running every Exercism test. They need no network and no Docker."""
+"""Tests for which Exercism tests the verifier runs. They need no network and no Docker."""
 
 from __future__ import annotations
 
@@ -11,10 +11,10 @@ from pathlib import Path
 import pytest
 
 from aider_polyglot.adapter import AiderPolyglotAdapter
-from aider_polyglot.utils import get_test_command_with_test_dir
+from aider_polyglot import utils
 
-# The sed call in tests/test.sh that re-enables disabled Java tests.
-JAVA_SED = re.compile(r"sed -i( -E)? '(s/@Disabled[^']*)'")
+# The sed call in the test.sh template that re-enables disabled Java tests.
+JAVA_SED = re.compile(r"sed -i -E '(s/@Disabled[^']*)'")
 
 
 def generate(tmp_path: Path, language: str, files: dict[str, str]) -> Path:
@@ -41,28 +41,12 @@ def config(solution: str, test: str, example: str) -> str:
     )
 
 
-def enable_java_tests(tmp_path: Path, source: str) -> str:
-    """Apply the generated test.sh's sed program to a Java test source."""
-    task_dir = generate(
-        tmp_path,
-        "java",
-        {
-            ".meta/config.json": config(
-                "src/main/java/Demo.java",
-                "src/test/java/DemoTest.java",
-                ".meta/src/reference/java/Demo.java",
-            ),
-            ".meta/src/reference/java/Demo.java": "class Demo {}\n",
-            "src/main/java/Demo.java": "class Demo {}\n",
-            "src/test/java/DemoTest.java": source,
-        },
-    )
-    extended, program = JAVA_SED.search(
-        (task_dir / "tests" / "test.sh").read_text()
-    ).groups()
-    flags = ["-E"] if extended else []
+def enable_java_tests(source: str) -> str:
+    """Apply the test.sh template's sed program to a Java test source."""
+    template = Path(utils.__file__).parent / "task-template" / "tests" / "test.sh"
+    program = JAVA_SED.search(template.read_text()).group(1)
     return subprocess.run(
-        ["sed", *flags, program],
+        ["sed", "-E", program],
         input=source,
         capture_output=True,
         text=True,
@@ -79,16 +63,14 @@ def enable_java_tests(tmp_path: Path, source: str) -> str:
         '@Disabled("Remove to run test.")',
     ],
 )
-def test_java_tests_disabled_with_a_reason_are_enabled(
-    tmp_path: Path, annotation: str
-) -> None:
+def test_java_tests_disabled_with_a_reason_are_enabled(annotation: str) -> None:
     source = f"    {annotation}\n    @Test\n    public void second() {{}}\n"
-    assert "@Disabled" not in enable_java_tests(tmp_path, source)
+    assert "@Disabled" not in enable_java_tests(source)
 
 
-def test_java_bare_disabled_stays_as_in_aiders_harness(tmp_path: Path) -> None:
+def test_java_bare_disabled_stays_as_in_aiders_harness() -> None:
     source = "    @Disabled\n    @Test\n    public void slow() {}\n"
-    assert enable_java_tests(tmp_path, source) == source
+    assert enable_java_tests(source) == source
 
 
 def test_rust_tasks_ship_the_whole_tests_directory(tmp_path: Path) -> None:
@@ -115,7 +97,7 @@ def test_javascript_enables_xtest_only_as_aiders_harness_does() -> None:
     if subprocess.run([sed, "--version"], capture_output=True, check=False).returncode:
         pytest.skip("needs GNU sed")
     program = re.search(
-        r"sed -i '([^']*)'", get_test_command_with_test_dir("javascript")
+        r"sed -i '([^']*)'", utils.get_test_command_with_test_dir("javascript")
     ).group(1)
     source = "xtest('a', f);\nxit('b', f);\ntest.skip('c', f);\n"
     enabled = subprocess.run(
