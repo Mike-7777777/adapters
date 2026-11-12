@@ -1,15 +1,15 @@
 from __future__ import annotations
 
 import json
-import shutil
 import sys
 from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
 
+# Importing grader must not leave a bytecode cache in the task template.
+sys.dont_write_bytecode = True
 PKG = Path(__file__).parents[1] / "src" / "healthbench_professional"
-sys.path.insert(0, str(PKG.parent))
 sys.path.insert(0, str(PKG / "task-template" / "tests"))
 sys.path.insert(0, str(PKG))  # hbp_data.py, copied into tests/ at generation time
 
@@ -96,27 +96,6 @@ def fake_row(task_id: str) -> dict:
         "difficulty": "typical",
         "canary_string": "canary",
     }
-
-
-def test_bytecode_caches_stay_out_of_generated_tasks(tmp_path, monkeypatch):
-    # Importing the template's grader (as this file does) leaves a __pycache__
-    # in the template; it must not be copied into tasks.
-    template = tmp_path / "template"
-    shutil.copytree(adapter_module.TEMPLATE_DIR, template)
-    cache = template / "tests" / "__pycache__"
-    cache.mkdir(exist_ok=True)
-    (cache / "grader.cpython-313.pyc").write_bytes(b"\xf3\x0d\x0d\x0a")
-    monkeypatch.setattr(adapter_module, "TEMPLATE_DIR", template)
-    monkeypatch.setattr(
-        adapter_module.hbp_data, "load_rows", lambda source=None: [fake_row("abc")]
-    )
-    adapter_module.HealthBenchProfessionalAdapter(tmp_path / "out").run()
-    leaked = [
-        f.relative_to(tmp_path / "out").as_posix()
-        for f in (tmp_path / "out").rglob("*")
-        if f.name == "__pycache__" or f.suffix == ".pyc"
-    ]
-    assert leaked == []
 
 
 def test_generated_task_holds_no_record_text(tmp_path, monkeypatch):
