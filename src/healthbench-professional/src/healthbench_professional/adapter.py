@@ -37,9 +37,10 @@ def select_parity_ids(rows: list[dict], size: int = PARITY_SIZE) -> list[str]:
     for row in rows:
         strata[(row["use_case"], row["type"])].append(row["id"])
     keys = sorted(strata)
-    quotas = {k: len(strata[k]) * size / len(rows) for k in keys}
-    seats = {k: int(quotas[k]) for k in keys}
-    by_remainder = sorted(keys, key=lambda k: -(quotas[k] - seats[k]))
+    # Integer quotient and remainder, so equal remainders compare equal.
+    quotas = {k: divmod(len(strata[k]) * size, len(rows)) for k in keys}
+    seats = {k: quotas[k][0] for k in keys}
+    by_remainder = sorted(keys, key=lambda k: -quotas[k][1])
     for k in by_remainder[: size - sum(seats.values())]:
         seats[k] += 1
     chosen = []
