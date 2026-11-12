@@ -217,7 +217,7 @@ class AiderPolyglotAdapter:
             self._create_instruction(task, output_dir)
             self._create_task_toml(task, output_dir)
             self._create_test_script(task, tests_dir)
-            self._create_solution_script(task, solution_dir, workspace_dir, tests_dir)
+            self._create_solution_script(task, solution_dir, workspace_dir)
             self._create_dockerfile(task, environment_dir)
 
             print(f"Generated Harbor task: {local_task_id}")
@@ -441,7 +441,6 @@ class AiderPolyglotAdapter:
         task: AiderPolyglotTask,
         solution_dir: Path,
         workspace_dir: Path,
-        tests_dir: Path,
     ) -> None:
         script_path = solution_dir / "solve.sh"
         script_path.write_text(
@@ -453,7 +452,6 @@ class AiderPolyglotAdapter:
             task=task,
             workspace_dir=workspace_dir,
             solution_dir=solution_dir,
-            tests_dir=tests_dir,
         )
 
     def _collect_examples(self, task: AiderPolyglotTask) -> List[Path]:
@@ -521,19 +519,12 @@ class AiderPolyglotAdapter:
         task: AiderPolyglotTask,
         workspace_dir: Path,
         solution_dir: Path,
-        tests_dir: Path,
     ) -> None:
         """Write the reference files and their destinations under solution/oracle/.
 
         solution/ is uploaded only for the oracle run, so nothing here reaches the
         agent's image. The same reference files are already in tests/.meta.
         """
-        meta_dir = tests_dir / ".meta"
-        if not meta_dir.exists():
-            raise ValueError(
-                f"No .meta at {meta_dir}; cannot build the oracle solution"
-            )
-
         examples = self._collect_examples(task)
         if not examples:
             raise ValueError(
