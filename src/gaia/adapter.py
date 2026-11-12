@@ -9,7 +9,6 @@ Source: https://huggingface.co/datasets/gaia-benchmark/GAIA
 
 from __future__ import annotations
 
-import re
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
@@ -100,7 +99,7 @@ class GAIAAdapter:
 
         # 3. Generate task.toml with the task name and level metadata
         task_toml = (self.template_dir / "task.toml").read_text(encoding="utf-8")
-        task_toml = task_toml.replace("{task_id}", self._task_name(task.task_id))
+        task_toml = task_toml.replace("{task_id}", task.task_id.lower())
         task_toml = task_toml.replace(
             'difficulty = "medium"',
             f'difficulty = "{self._level_to_difficulty(task.level)}"',
@@ -131,11 +130,6 @@ class GAIAAdapter:
         )
 
         return task_dir
-
-    @staticmethod
-    def _task_name(task_id: str) -> str:
-        """Registry-safe task name: lowercase, other characters become hyphens."""
-        return re.sub(r"[^a-z0-9]+", "-", task_id.lower()).strip("-")
 
     def _generate_dockerfile(self, has_attachment: bool) -> str:
         """Generate Dockerfile with optional workspace copy."""

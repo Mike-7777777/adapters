@@ -192,15 +192,3 @@ def test_generated_text_files_are_utf8(tmp_path: Path, monkeypatch) -> None:
     task_dir, _ = render_task(tmp_path, "Malmö")
     assert (task_dir / "tests" / "expected_answer.txt").read_bytes() == "Malmö".encode()
 
-
-def test_task_name_is_sanitized(tmp_path: Path) -> None:
-    record = {
-        "task_id": "My Task_01",
-        "Question": "Q?",
-        "Final answer": "x",
-        "Level": 1,
-    }
-    adapter = GAIAAdapter(output_dir=tmp_path / "tasks")
-    task_dir = adapter.generate_task(records_to_tasks([record], source_name="stub")[0])
-    task = tomllib.loads((task_dir / "task.toml").read_text(encoding="utf-8"))["task"]
-    assert task["name"] == "gaia-benchmark/gaia__my-task-01"
