@@ -98,9 +98,7 @@ class RewardBench2Adapter:
         limit: int | None = None,
         overwrite: bool = False,
         task_ids: list[str] | None = None,
-        source: str | Path | None = None,
         split: str = "full",
-        **kwargs,
     ):
         if split not in SPLITS:
             raise ValueError(f"split must be one of {SPLITS}, got {split!r}")
@@ -110,12 +108,11 @@ class RewardBench2Adapter:
         self.limit = limit
         self.overwrite = overwrite
         self.task_ids = set(task_ids) if task_ids else None
-        self.source = source
         self.split = split
 
     def build_tasks(self) -> list[dict]:
         """One spec per dataset row, in file order, with its answer key."""
-        rows = rb2_data.load_rows(self.source)
+        rows = rb2_data.load_rows()
         best_of_4 = [row for row in rows if row["subset"] != TIES]
         positions = generate_shuffle_positions(len(best_of_4), OFFICIAL_SEED)
         if len(best_of_4) == OFFICIAL_BEST_OF_4_ROWS:

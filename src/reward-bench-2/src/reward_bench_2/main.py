@@ -14,13 +14,6 @@ from .adapter import SPLITS, RewardBench2Adapter
 DEFAULT_OUTPUT_DIR = Path(__file__).resolve().parents[4] / "datasets" / "reward-bench-2"
 
 
-def non_negative_int(value: str) -> int:
-    number = int(value)
-    if number < 0:
-        raise argparse.ArgumentTypeError("must not be negative")
-    return number
-
-
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -31,7 +24,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--limit",
-        type=non_negative_int,
+        type=int,
         default=None,
         help="Generate only the first N tasks",
     )
@@ -47,11 +40,6 @@ def main() -> None:
         help="Only generate these task IDs",
     )
     parser.add_argument(
-        "--source",
-        default=None,
-        help="Local copy of the pinned parquet file (default: download it)",
-    )
-    parser.add_argument(
         "--split",
         choices=SPLITS,
         default="full",
@@ -64,7 +52,6 @@ def main() -> None:
         overwrite=args.overwrite,
         limit=args.limit,
         task_ids=args.task_ids,
-        source=args.source,
         split=args.split,
     )
 

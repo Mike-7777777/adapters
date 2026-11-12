@@ -79,23 +79,22 @@ def ties_score(rows: list[dict]) -> float:
     )
 
 
-def load_gradings(job_dirs: list[Path]) -> tuple[list[dict], list[str]]:
+def load_gradings(job_dir: Path) -> tuple[list[dict], list[str]]:
     """Gradings of all trials, plus the trials that have no grading."""
     gradings, ungraded = [], []
-    for job_dir in job_dirs:
-        for result in sorted(job_dir.glob("*/result.json")):
-            reward = recorded_reward(result)
-            grading_path = result.parent / "verifier" / "grading.json"
-            if reward is None or not grading_path.is_file():
-                ungraded.append(str(result.parent))
-                continue
-            grading = json.loads(grading_path.read_text())
-            if grading.get("reward") != reward:
-                raise ValueError(
-                    f"{result.parent}: grading.json has reward {grading.get('reward')}, "
-                    f"Harbor recorded {reward}"
-                )
-            gradings.append(grading)
+    for result in sorted(job_dir.glob("*/result.json")):
+        reward = recorded_reward(result)
+        grading_path = result.parent / "verifier" / "grading.json"
+        if reward is None or not grading_path.is_file():
+            ungraded.append(str(result.parent))
+            continue
+        grading = json.loads(grading_path.read_text())
+        if grading.get("reward") != reward:
+            raise ValueError(
+                f"{result.parent}: grading.json has reward {grading.get('reward')}, "
+                f"Harbor recorded {reward}"
+            )
+        gradings.append(grading)
     return gradings, ungraded
 
 
@@ -149,9 +148,7 @@ def score(gradings: list[dict]) -> dict:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    parser.add_argument(
-        "job_dirs", nargs="+", type=Path, help="Harbor job directory of one run"
-    )
+    parser.add_argument("job_dir", type=Path, help="Harbor job directory of one run")
     parser.add_argument(
         "--allow-ungraded",
         action="store_true",
@@ -160,12 +157,11 @@ def main() -> int:
     parser.add_argument("--json", action="store_true", help="Print the result as JSON")
     args = parser.parse_args()
 
-    for job_dir in args.job_dirs:
-        if not job_dir.is_dir():
-            print(f"not a directory: {job_dir}", file=sys.stderr)
-            return 2
+    if not args.job_dir.is_dir():
+        print(f"not a directory: {args.job_dir}", file=sys.stderr)
+        return 2
     try:
-        gradings, ungraded = load_gradings(args.job_dirs)
+        gradings, ungraded = load_gradings(args.job_dir)
     except ValueError as error:
         print(error, file=sys.stderr)
         return 2
@@ -202,6 +198,8 @@ def main() -> int:
         f"{'Average':<12} {100 * result['average']:6.2f}  "
         f"(unweighted mean of {result['subsets_in_average']} subsets, {result['tasks']} tasks)"
     )
+    if ungraded:
+        print(f"{len(ungraded)} ungraded trial(s) left out")
     return 0
 
 

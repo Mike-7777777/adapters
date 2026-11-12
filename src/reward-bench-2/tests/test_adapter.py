@@ -20,8 +20,8 @@ from reward_bench_2 import adapter as adapter_module
 from reward_bench_2 import prompts, score
 from reward_bench_2.adapter import RewardBench2Adapter
 
-# Set to a local copy of the pinned parquet file to run the full-dataset checks.
-REAL_SOURCE = os.environ.get("RB2_SOURCE")
+# Set to 1 to download the pinned dataset and run the full-dataset checks.
+FULL_DATASET = os.environ.get("RB2_FULL_DATASET")
 
 
 def best_of_4_row(subset: str, row_id: str) -> dict:
@@ -57,9 +57,7 @@ FAKE_ROWS = [
 
 @pytest.fixture
 def fake_data(monkeypatch):
-    monkeypatch.setattr(
-        adapter_module.rb2_data, "load_rows", lambda source=None: FAKE_ROWS
-    )
+    monkeypatch.setattr(adapter_module.rb2_data, "load_rows", lambda: FAKE_ROWS)
 
 
 @pytest.fixture
@@ -259,7 +257,7 @@ def test_bytecode_next_to_the_template_is_not_copied(fake_data, tmp_path):
 
 def test_task_ids_outside_the_parity_split_are_reported(tmp_path, monkeypatch):
     rows = [best_of_4_row("Math", str(i)) for i in range(50)]
-    monkeypatch.setattr(adapter_module.rb2_data, "load_rows", lambda source=None: rows)
+    monkeypatch.setattr(adapter_module.rb2_data, "load_rows", lambda: rows)
     ids = adapter_module.select_parity_ids({"Math": [f"math-{i}" for i in range(50)]})
     parity_file = tmp_path / "parity_task_ids.txt"
     parity_file.write_text("\n".join(ids) + "\n")
@@ -272,13 +270,28 @@ def test_task_ids_outside_the_parity_split_are_reported(tmp_path, monkeypatch):
         RewardBench2Adapter(tmp_path / "out", split="parity").run()
 
 
-def test_source_with_a_wrong_checksum_is_rejected(tmp_path):
-    fake = tmp_path / "test.parquet"
-    fake.write_bytes(b"not the dataset")
-    with pytest.raises(RuntimeError, match="sha256 mismatch"):
-        adapter_module.rb2_data.load_rows(fake)
-    with pytest.raises(FileNotFoundError):
-        adapter_module.rb2_data.load_rows(tmp_path / "absent.parquet")
+def test_load_rows_asks_for_the_pinned_revision(monkeypatch):
+    calls = []
+
+    def stop_before_the_network(repo_id, filename, **kwargs):
+        calls.append((repo_id, filename, kwargs))
+        raise OSError("no network in unit tests")
+
+    monkeypatch.setattr(
+        adapter_module.rb2_data, "hf_hub_download", stop_before_the_network
+    )
+    with pytest.raises(OSError):
+        adapter_module.rb2_data.load_rows()
+    assert calls == [
+        (
+            "allenai/reward-bench-2",
+            "data/test-00000-of-00001.parquet",
+            {
+                "repo_type": "dataset",
+                "revision": "7ff08853b0d5686e79b13fda8677024f566a104a",
+            },
+        )
+    ]
 
 
 def test_seed_0_positions_start_like_the_official_ones():
@@ -398,7 +411,7 @@ def test_dataset_text_is_inserted_verbatim(monkeypatch, tmp_path):
     odd = best_of_4_row("Math", "0")
     odd["prompt"] = "keep {task_id} and {judge_prompt}\r\n﻿as is"
     odd["chosen"] = ["{body} $HOME `x` {n}"]
-    monkeypatch.setattr(adapter_module.rb2_data, "load_rows", lambda source=None: [odd])
+    monkeypatch.setattr(adapter_module.rb2_data, "load_rows", lambda: [odd])
     RewardBench2Adapter(tmp_path).run()
     instruction = (tmp_path / "math-0" / "instruction.md").read_bytes().decode()
     assert odd["prompt"] in instruction
@@ -456,9 +469,11 @@ def test_parity_selection_keeps_all_ties_and_caps_other_subsets():
     assert chosen == adapter_module.select_parity_ids(by_subset)
 
 
-def test_unknown_split_is_rejected(tmp_path):
+def test_unknown_split_and_misspelled_arguments_are_rejected(tmp_path):
     with pytest.raises(ValueError, match="split must be one of"):
         RewardBench2Adapter(tmp_path, split="lite")
+    with pytest.raises(TypeError):
+        RewardBench2Adapter(tmp_path, splt="parity")
 
 
 # --- official aggregation ---------------------------------------------------
@@ -544,7 +559,7 @@ def test_load_gradings_reports_trials_without_a_reward_or_grading(tmp_path):
     no_reward = write_trial(
         tmp_path, "math-2__ghi", None, {"task_id": "math-2", "reward": 1.0}
     )
-    gradings, ungraded = score.load_gradings([tmp_path])
+    gradings, ungraded = score.load_gradings(tmp_path)
     assert gradings == [grading]
     assert ungraded == [str(no_grading), str(no_reward)]
 
@@ -557,7 +572,7 @@ def test_load_gradings_rejects_a_grading_that_disagrees_with_harbor(tmp_path):
         {"task_id": "math-0", "subset": "Math", "reward": 1.0},
     )
     with pytest.raises(ValueError, match="Harbor recorded 0.0"):
-        score.load_gradings([tmp_path])
+        score.load_gradings(tmp_path)
 
 
 def test_score_leaves_ties_out_without_a_ref_tied_pair():
@@ -592,7 +607,7 @@ def test_grader_output_feeds_the_scorer(fake_data, tmp_path, grader_paths, monke
         write_trial(job, f"{task_dir.name}__x", grading["reward"], grading)
     monkeypatch.setattr(sys, "argv", ["reward-bench-2-score", str(job), "--json"])
     assert score.main() == 0
-    result = score.score(score.load_gradings([job])[0])
+    result = score.score(score.load_gradings(job)[0])
     assert {name: entry["score"] for name, entry in result["subsets"].items()} == {
         "Factuality": 1.0,
         "Precise IF": 1.0,
@@ -617,7 +632,9 @@ def test_score_cli_exit_codes(tmp_path, monkeypatch, capsys):
     write_trial(job, "math-1__b", None, None)
     assert run(str(job)) == 1
     assert run(str(job), "--allow-ungraded") == 0
-    assert "Math" in capsys.readouterr().out
+    out = capsys.readouterr().out
+    assert "Math" in out
+    assert "1 ungraded trial(s) left out" in out
     write_trial(
         job, "math-0__c", 1.0, {"task_id": "math-0", "subset": "Math", "reward": 1.0}
     )
@@ -627,9 +644,9 @@ def test_score_cli_exit_codes(tmp_path, monkeypatch, capsys):
 # --- full dataset (needs the pinned file) -----------------------------------
 
 
-@pytest.mark.skipif(not REAL_SOURCE, reason="set RB2_SOURCE to the pinned parquet file")
+@pytest.mark.skipif(not FULL_DATASET, reason="set RB2_FULL_DATASET=1 to download it")
 def test_full_dataset_counts_positions_and_parity_list(tmp_path):
-    adapter = RewardBench2Adapter(tmp_path, source=REAL_SOURCE)
+    adapter = RewardBench2Adapter(tmp_path)
     specs = adapter.build_tasks()  # also checks the pinned seed-0 positions
     assert len(specs) == 1865
     counts: dict[str, int] = {}
@@ -643,5 +660,5 @@ def test_full_dataset_counts_positions_and_parity_list(tmp_path):
         "Focus": 495,
         "Ties": 102,
     }
-    parity = RewardBench2Adapter(tmp_path, source=REAL_SOURCE, split="parity")
+    parity = RewardBench2Adapter(tmp_path, split="parity")
     assert len(parity.select(specs)) == 302
