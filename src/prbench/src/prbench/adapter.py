@@ -4,10 +4,6 @@ Source: the HF dataset ScaleAI/PRBench (CC-BY-4.0): 600 Finance and 500 Legal
 conversations, each with an expert-written weighted rubric. A task asks the
 agent for the assistant's next reply; the verifier grades that reply against
 the rubric with the upstream judge prompt and scoring (tests/grader.py).
-
-ADAPTER_NAME and DOMAINS are the only places that fix the adapter layout. One
-adapter covering both domains is the default; for one adapter per domain, copy
-the package and keep a single entry in DOMAINS (see the README).
 """
 
 from __future__ import annotations
@@ -39,33 +35,22 @@ SPLITS = (
 )
 
 
-def task_key(domain: str, task: str) -> str:
-    """Layout-independent id, used in parity_task_ids.txt."""
-    return f"{domain}-{task}"
-
-
-def local_task_id(domain: str, task: str) -> str:
-    """Directory name and registry suffix; the domain prefix is dropped when
-    the adapter covers a single domain."""
-    return task_key(domain, task) if len(DOMAINS) > 1 else task
-
-
 def slug(text: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
 
 
-def select_parity_keys(
+def select_parity_ids(
     tasks: list[dict], size: int = PARITY_SIZE_PER_DOMAIN
 ) -> list[str]:
     """Pick one domain's parity subset, stratified by (hard, topic).
 
     Each stratum gets seats in proportion to its size (largest remainder; ties
     go to the earlier stratum key). Within a stratum, records are taken in
-    sha256(key) order, so the choice needs no random generator.
+    sha256(task id) order, so the choice needs no random generator.
     """
     strata: dict[tuple[bool, str], list[str]] = defaultdict(list)
     for task in tasks:
-        strata[(task["hard"], task["topic"])].append(task["key"])
+        strata[(task["hard"], task["topic"])].append(task["id"])
     keys = sorted(strata)
     quotas = {k: len(strata[k]) * size / len(tasks) for k in keys}
     seats = {k: int(quotas[k]) for k in keys}
@@ -120,13 +105,6 @@ class PRBenchAdapter:
         reference_texts: str = "prepend",
         **kwargs,
     ):
-        if split not in SPLITS:
-            raise ValueError(f"split must be one of {SPLITS}, got {split!r}")
-        if reference_texts not in REFERENCE_TEXT_MODES:
-            raise ValueError(
-                f"reference_texts must be one of {REFERENCE_TEXT_MODES}, "
-                f"got {reference_texts!r}"
-            )
         self.split = split
         self.reference_texts = reference_texts
         self.output_dir = Path(output_dir)
@@ -151,8 +129,7 @@ class PRBenchAdapter:
                     canaries.append(hard_canaries[task])
                 tasks.append(
                     {
-                        "key": task_key(domain, task),
-                        "id": local_task_id(domain, task),
+                        "id": f"{domain}-{task}",
                         "domain": domain,
                         "hard": task in hard_canaries,
                         "topic": row["topic"],
@@ -164,20 +141,15 @@ class PRBenchAdapter:
 
     def select(self, tasks: list[dict]) -> list[dict]:
         if self.split == "parity":
-            keys = []
+            ids = set()
             for domain in DOMAINS:
                 in_domain = [t for t in tasks if t["domain"] == domain]
-                keys += select_parity_keys(in_domain, PARITY_SIZE_PER_DOMAIN)
+                ids.update(select_parity_ids(in_domain, PARITY_SIZE_PER_DOMAIN))
             # The original-benchmark side reads the committed list, so both
             # sides must run the same records.
-            listed = {
-                key
-                for key in PARITY_IDS_FILE.read_text().split()
-                if key.split("-")[0] in DOMAINS
-            }
-            if set(keys) != listed:
+            if ids != set(PARITY_IDS_FILE.read_text().split()):
                 raise RuntimeError(f"parity subset differs from {PARITY_IDS_FILE.name}")
-            tasks = [t for t in tasks if t["key"] in set(keys)]
+            tasks = [t for t in tasks if t["id"] in ids]
         elif self.split != "full":
             domain = self.split.removesuffix("_hard")
             hard_only = self.split.endswith("hard")
@@ -201,9 +173,12 @@ class PRBenchAdapter:
     def run(self) -> None:
         tasks = self.select(self.load_tasks())
         self.output_dir.mkdir(parents=True, exist_ok=True)
-        for task in tasks:
-            self._write_task(task)
-        print(f"{len(tasks)} tasks in split {self.split!r} -> {self.output_dir}")
+        written = sum(self._write_task(task) for task in tasks)
+        print(
+            f"split {self.split!r}: wrote {written} tasks, skipped "
+            f"{len(tasks) - written} existing (--overwrite replaces them) "
+            f"-> {self.output_dir}"
+        )
 
     def _oracle_body(self, task_id: str, rubric: list[dict]) -> str:
         written = self.oracle_dir / f"{task_id}.txt" if self.oracle_dir else None
@@ -214,11 +189,12 @@ class PRBenchAdapter:
         encoded = base64.b64encode(reply).decode()
         return f"mkdir -p /workspace\necho '{encoded}' | base64 -d > /workspace/response.txt"
 
-    def _write_task(self, task: dict) -> None:
+    def _write_task(self, task: dict) -> bool:
+        """Write one task directory; False when it exists and is left as is."""
         task_dir = self.output_dir / task["id"]
         if task_dir.exists():
             if not self.overwrite:
-                return
+                return False
             shutil.rmtree(task_dir)
         # Importing the template's grader (unit tests do) leaves a bytecode cache there.
         shutil.copytree(
@@ -272,3 +248,4 @@ class PRBenchAdapter:
         (task_dir / "tests" / "task.json").write_text(
             json.dumps(record, indent=2, ensure_ascii=False) + "\n"
         )
+        return True

@@ -1,10 +1,4 @@
-"""
-Main entry point for the template adapter. Do not modify any of the existing flags.
-You can add any additional flags you need.
-
-Constructs the Adapter class defined in adapter.py and calls run() to generate tasks
-in the Harbor format at the configured output directory.
-"""
+"""Command line entry point: generate PRBench tasks in the Harbor format."""
 
 import argparse
 from pathlib import Path

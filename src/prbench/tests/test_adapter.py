@@ -143,15 +143,6 @@ def test_domain_and_hard_splits(tmp_path, fake_data, split, expected):
     assert sorted(p.name for p in out.iterdir()) == expected
 
 
-def test_single_domain_layout_drops_the_domain_prefix(tmp_path, fake_data, monkeypatch):
-    monkeypatch.setattr(adapter_module, "ADAPTER_NAME", "prbench-legal")
-    monkeypatch.setattr(adapter_module, "DOMAINS", ("legal",))
-    out = generate(tmp_path)
-    assert sorted(p.name for p in out.iterdir()) == ["l1", "l2"]
-    toml = tomllib.loads((out / "l1" / "task.toml").read_text())
-    assert toml["task"]["name"] == "scaleai/prbench-legal__l1"
-
-
 def test_task_files_hold_the_conversation_rubric_and_canaries(tmp_path, fake_data):
     task = generate(tmp_path) / "finance-f1"
     conversation = (task / "environment" / "conversation.md").read_text()
@@ -170,13 +161,15 @@ def test_task_files_hold_the_conversation_rubric_and_canaries(tmp_path, fake_dat
     assert "mentions X" not in visible and "invents a statute" not in visible
 
 
-def test_task_ids_limit_and_overwrite(tmp_path, fake_data):
+def test_task_ids_limit_and_overwrite(tmp_path, fake_data, capsys):
     out = generate(tmp_path, task_ids=["legal-l2", "finance-f2"], limit=1)
     assert [p.name for p in out.iterdir()] == ["finance-f2"]
     marker = out / "finance-f2" / "marker"
     marker.write_text("kept")
+    capsys.readouterr()
     adapter_module.PRBenchAdapter(out, task_ids=["finance-f2"]).run()
     assert marker.exists()
+    assert "wrote 0 tasks, skipped 1 existing" in capsys.readouterr().out
     adapter_module.PRBenchAdapter(out, task_ids=["finance-f2"], overwrite=True).run()
     assert not marker.exists()
 
@@ -231,7 +224,7 @@ def test_default_oracle_is_an_outline_of_the_positive_criteria(tmp_path, fake_da
 
 def strata_tasks(sizes: dict[tuple[bool, str], int]) -> list[dict]:
     return [
-        {"key": f"{'h' if hard else 'b'}-{topic}-{n}", "hard": hard, "topic": topic}
+        {"id": f"{'h' if hard else 'b'}-{topic}-{n}", "hard": hard, "topic": topic}
         for (hard, topic), count in sizes.items()
         for n in range(count)
     ]
@@ -241,14 +234,14 @@ def test_parity_seats_follow_stratum_sizes():
     tasks = strata_tasks(
         {(False, "a"): 30, (False, "b"): 7, (True, "a"): 50, (True, "b"): 13}
     )
-    keys = adapter_module.select_parity_keys(tasks, size=20)
+    keys = adapter_module.select_parity_ids(tasks, size=20)
     counts: dict[str, int] = {}
     for key in keys:
         stratum = key.rsplit("-", 1)[0]
         counts[stratum] = counts.get(stratum, 0) + 1
     # Quotas 6.0, 1.4, 10.0, 2.6: the last seat goes to the largest remainder.
     assert counts == {"b-a": 6, "b-b": 1, "h-a": 10, "h-b": 3}
-    assert keys == adapter_module.select_parity_keys(list(reversed(tasks)), size=20)
+    assert keys == adapter_module.select_parity_ids(list(reversed(tasks)), size=20)
 
 
 def test_parity_split_generates_only_the_listed_tasks(tmp_path, fake_data, monkeypatch):
@@ -259,7 +252,7 @@ def test_parity_split_generates_only_the_listed_tasks(tmp_path, fake_data, monke
     expected = [
         key
         for domain in adapter_module.DOMAINS
-        for key in adapter_module.select_parity_keys(
+        for key in adapter_module.select_parity_ids(
             [t for t in tasks if t["domain"] == domain], size=1
         )
     ]
@@ -283,12 +276,6 @@ def test_committed_parity_list_has_100_unique_tasks_per_domain():
 def test_unknown_task_ids_are_reported(tmp_path, fake_data):
     with pytest.raises(ValueError, match="finance-zz"):
         generate(tmp_path, task_ids=["finance-f1", "finance-zz"])
-
-
-@pytest.mark.parametrize("kwargs", [{"split": "lite"}, {"reference_texts": "append"}])
-def test_adapter_rejects_unknown_options(tmp_path, kwargs):
-    with pytest.raises(ValueError):
-        adapter_module.PRBenchAdapter(tmp_path, **kwargs)
 
 
 # --- tests/grader.py ----------------------------------------------------------
@@ -396,10 +383,10 @@ def test_full_score_when_every_positive_criterion_is_met(graded_task):
     assert prompt.count("assistant: mentions X and mentions Y") == 1
     assert "<think>" not in prompt
     # Upstream sends the judge no sampling or reasoning parameters.
-    assert graded_task.judge.kwargs[0] == {"model": "o4-mini"}
+    assert graded_task.judge.kwargs[0] == {"model": "gpt-4.1"}
     grading = json.loads(graded_task.grading.read_text())
     assert [i["criteria_met"] for i in grading["items"]] == [True, True, False]
-    assert grading["judge_model_reported"] == ["o4-mini-snapshot"]
+    assert grading["judge_model_reported"] == ["gpt-4.1-snapshot"]
 
 
 def test_negative_score_keeps_its_sign_in_score_and_floors_in_reward(graded_task):
@@ -443,6 +430,31 @@ def test_transient_judge_errors_are_retried(graded_task):
     graded_task.response.write_text("mentions X and mentions Y")
     assert grader.main() == 0
     assert json.loads(graded_task.reward.read_text())["reward"] == 1.0
+
+
+def test_empty_judge_output_counts_as_not_met_as_upstream(graded_task):
+    graded_task.judge.create = lambda model, input, **kwargs: (
+        graded_task.judge.prompts.append(input)
+        or types.SimpleNamespace(output_text="", model=model)
+    )
+    graded_task.response.write_text("mentions X and mentions Y")
+    assert grader.main() == 0
+    assert json.loads(graded_task.reward.read_text())["score"] == 0.0
+    assert len(graded_task.judge.prompts) == 3
+
+
+def test_rejected_key_or_model_is_not_retried(graded_task):
+    def reject(model, input, **kwargs):
+        graded_task.judge.prompts.append(input)
+        error = RuntimeError("model not found")
+        error.status_code = 404
+        raise error
+
+    graded_task.judge.create = reject
+    graded_task.response.write_text("mentions X")
+    assert grader.main() == 1
+    assert not graded_task.reward.exists()
+    assert len(graded_task.judge.prompts) == 3
 
 
 def test_exhausted_judge_retries_fail_the_verifier_without_a_reward(graded_task):

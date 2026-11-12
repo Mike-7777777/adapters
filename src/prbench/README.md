@@ -17,7 +17,7 @@ An LLM judge (`o4-mini` in the paper) decides whether each criterion is met. Tas
 ## Adapter Features
 
 - Upstream-faithful grading. `tests/grader.py` reuses the PRBench grader prompt verbatim, renders the conversation the same way, sends one judge call per criterion through the Responses API with no sampling parameters, parses verdicts with the upstream rule and computes both upstream scores. Checked against the upstream functions on all 1,100 records.
-- Three numbers per task in `reward.json`: `reward` (task score floored at 0), `score` (the unclipped task score the paper's metric averages) and `score_normalized`.
+- Three numbers per task in `reward.json`: `reward`, `score` and `score_normalized` (see Reward range under Notes & Caveats).
 - Multi-turn conversations and reference texts. Earlier turns, including the model replies stored in the dataset, are given to the agent in `/workspace/conversation.md`; reference texts are placed in front of the prompt of their turn.
 - The verifier grades from its own copy of the conversation and rubric (`tests/task.json`), so editing files under `/workspace` cannot change what is graded. The rubric is never placed where the agent can read it.
 - Pinned data: each parquet file is sha256-checked against the pinned revision before tasks are built.
@@ -53,12 +53,12 @@ From locally generated tasks. The verifier calls the judge through the OpenAI Re
 
 ```bash
 export OPENAI_API_KEY=...
-# optional: OPENAI_BASE_URL, JUDGE_MODEL (default o4-mini), JUDGE_REASONING_EFFORT
+# optional: OPENAI_BASE_URL, JUDGE_MODEL (default gpt-4.1), JUDGE_REASONING_EFFORT
 # (default: not sent, as upstream), JUDGE_CONCURRENCY (default 8)
 harbor run -p datasets/prbench -a <agent> -m "<model>"
 ```
 
-From the repository root with the reference config (oracle agent by default; see [Oracle solutions](#notes--caveats) for `ORACLE_MODE`):
+From the repository root with the reference config (oracle agent by default; see [Oracle solutions](#notes--caveats) for `ORACLE_MODE`). This run calls no model and needs no API key:
 
 ```bash
 ORACLE_MODE=true harbor run -c src/prbench/run_prbench.yaml
@@ -70,7 +70,7 @@ A single trial:
 harbor trial start -p datasets/prbench/<task_id> -a <agent> -m "<model>"
 ```
 
-One full grading pass is 18,692 judge calls (9,865 Finance, 8,827 Legal). The benchmark score is the mean of `score` over tasks, floored at 0; `reward` is already floored per task and averages slightly higher.
+One full grading pass is 18,692 judge calls (9,865 Finance, 8,827 Legal).
 
 ## Usage: Create Task Directories
 
@@ -87,13 +87,13 @@ Unit tests: `uv run pytest tests`.
 
 Pending; the plan below is a proposal until agreed with the Harbor team. Scenario 2: the original harness has no agent, so a fork of scaleapi/PRBench gets a runner that produces each reply with the same agent, instruction and `conversation.md` as the Harbor task, then grades the replies through the original `evals.py` with `final_response_source: prefilled`. Both sides use the same judge model. Benchmark score on each side: the mean unclipped task score, floored at 0 after averaging.
 
-**Parity subset.** `--split parity` generates the 200 tasks listed in `src/prbench/parity_task_ids.txt`, 100 per domain, which the original side reads too. Within a domain the subset is stratified by hard-subset membership and topic: each stratum gets seats in proportion to its size (largest remainder), and within a stratum records are taken in sha256 order of `<domain>-<task>`. `select_parity_keys` in `adapter.py` reproduces the list, and generation stops if the two differ.
+**Parity subset.** `--split parity` generates the 200 tasks listed in `src/prbench/parity_task_ids.txt`, 100 per domain, which the original side reads too. Within a domain the subset is stratified by hard-subset membership and topic: each stratum gets seats in proportion to its size (largest remainder), and within a stratum records are taken in sha256 order of `<domain>-<task>`. `select_parity_ids` in `adapter.py` reproduces the list, and generation stops if the two differ.
 
-Harbor side, from this directory:
+Harbor side, from the repository root:
 
 ```bash
-uv run prbench --split parity --output-dir ../../datasets/prbench-parity
-harbor run -c prbench_parity.yaml
+uv run --project src/prbench prbench --split parity --output-dir datasets/prbench-parity
+harbor run -c src/prbench/prbench_parity.yaml
 ```
 
 | Agent | Model | Metric | Number of Runs | Dataset Size | Original Benchmark Performance | Harbor Adapter Performance |
@@ -110,13 +110,13 @@ Checks so far, none of which call a model:
 
 ## Notes & Caveats
 
-**Judge model.** The paper's judge, `o4-mini`, was shut down on the OpenAI API on 2026-10-23 ([deprecations](https://developers.openai.com/api/docs/deprecations); OpenAI names `gpt-5.6-terra` as the replacement). The default stays `o4-mini` because results are only comparable with the paper under that judge and it may still be served by other providers; set `JUDGE_MODEL` otherwise. `o4-mini` is the alias the original config uses; `grading.json` records the model name the endpoint reports, so parity runs can state the exact snapshot. The paper reports similar agreement with human experts for `o4-mini` and `gpt-4.1` (Cohen's kappa 0.603 and 0.605).
+**Judge model.** The paper's judge, `o4-mini`, was shut down on the OpenAI API on 2026-10-23 ([deprecations](https://developers.openai.com/api/docs/deprecations)). The default is `gpt-4.1`, the other judge the paper validated against human experts (Cohen's kappa 0.605, against 0.603 for `o4-mini`); OpenAI shuts it down on 2027-01-14. Scores are directly comparable with the paper's only under `o4-mini`; `JUDGE_MODEL` selects it on an endpoint that still serves it, or any other model. `grading.json` records the model name the endpoint reports, so parity runs can state the exact snapshot.
 
-**Reward range.** A task score can be negative when negative criteria are met (down to -0.74 on the worst task). The paper floors only the mean over tasks; `reward` floors each task so it stays in [0, 1], and `score` keeps the unclipped value for the paper's metric.
+**Reward range.** A task score can be negative when negative criteria are met (down to -0.74 on the worst task). The paper floors only the mean over tasks, so the benchmark score is the mean of `score` (the unclipped task score), floored at 0. `reward` floors each task so it stays in [0, 1], and averages slightly higher.
 
 **Reference texts.** 17 tasks (15 Finance, 2 Legal) come with reference texts. The paper says they are prepended to the prompt. Upstream commit `7b2df0a` does not actually prepend them: `process_reference_texts` tests `isinstance(value, list)`, and the column arrives as a NumPy array (verified with `datasets` 5.2.0 and `pandas` 3.1.1). This adapter follows the paper; `--reference-texts omit` reproduces the upstream behavior, and the parity fork carries the one-line fix.
 
-**Judge failures.** Upstream counts a criterion as not met when the judge call still fails after five attempts. Here the verifier exits non-zero instead, so Harbor records a verifier error rather than a lowered score. Unparseable judge output counts as not met, as upstream.
+**Judge failures and empty replies.** Two departures from upstream. Upstream counts a criterion as not met when the judge call still fails after five attempts; here the verifier exits non-zero instead, so Harbor records a verifier error rather than a lowered score (a rejected key or unknown model fails on the first attempt). Harbor's job mean counts a trial without a reward as 0, so rerun errored trials before reading it. And a missing or empty reply scores 0 without a judge call, where upstream would send the empty reply to the judge. Unparseable or empty judge output counts as not met, as upstream.
 
 **Oracle solutions.** The dataset has no reference answers: the last turn of every record has no reply, and the `scratchpad` field holds expert notes, not an answer. By default `solution/solve.sh` writes an outline of the task's positive rubric criteria, taken verbatim from the rubric; `--oracle-dir` replaces it with replies written for each task. The oracle run uses `ORACLE_MODE=true`, the approach of the merged `clbench` adapter: the verifier skips the judge and checks that the task data loads and that the oracle wrote a non-empty reply. It validates the image build, the file layout and the verifier wiring on every task; it does not measure reply quality. With about 17 criteria per task, a judged full score needs every criterion judged as intended, so a small share of tasks would fall below 1.0 on any single judge pass even with a strong reply. Agent runs never set `ORACLE_MODE` and always go through the judge.
 
@@ -124,19 +124,18 @@ Checks so far, none of which call a model:
 
 **Web access.** The paper's main results are without web search. Harbor agents can browse unless the environment forbids it.
 
-**One adapter or two.** The adapter list has separate rows for PRBench Finance and PRBench Legal. `ADAPTER_NAME` and `DOMAINS` at the top of `adapter.py` are the only places that fix the layout; with a single domain in `DOMAINS`, task directories drop the domain prefix (`scaleai/prbench-legal__<task>`), and the parity list is already per domain.
-
 ## Installation / Prerequisites
 
 - Docker, and Harbor 0.25 or later (Harbor 0.25 clears `reward.json` before each verification).
 - Network access when generating tasks (Hugging Face), when building images (PyPI for the `openai` package) and at verification time (the judge endpoint).
-- An API key for the judge model.
+- An API key for the judge model, for agent runs.
 
 ## Troubleshooting
 
 - `sha256 mismatch`: the downloaded file differs from the pinned revision; check `HF_ENDPOINT` or the `--source-dir` files.
 - `download failed after 3 attempts`: Hugging Face is unreachable; set `HF_ENDPOINT` to a mirror or pass `--source-dir`.
-- Verifier error with `judge failed after 5 attempts`: the judge endpoint kept failing; check `OPENAI_BASE_URL`, `JUDGE_MODEL` and the key.
+- Verifier error with `Missing credentials`: an agent run needs `OPENAI_API_KEY` for the judge.
+- Verifier error with `judge failed after N attempts`: the judge endpoint kept failing or rejected the request; check `OPENAI_BASE_URL`, `JUDGE_MODEL` and the key.
 - `task ids not in split`: `--task-ids` takes generated task ids such as `finance-<task>`, and they must belong to the chosen `--split`.
 
 ## Citation

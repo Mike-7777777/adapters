@@ -39,12 +39,10 @@ def download(url: str, attempts: int = 3) -> bytes:
             with urllib.request.urlopen(url, timeout=120) as resp:
                 return resp.read()
         except OSError as exc:
-            if attempt == attempts:
-                raise SystemExit(
-                    f"download failed after {attempts} attempts: {url}: {exc}"
-                )
-            time.sleep(5 * attempt)
-    raise AssertionError("unreachable")
+            error = exc
+            if attempt < attempts:
+                time.sleep(5 * attempt)
+    raise SystemExit(f"download failed after {attempts} attempts: {url}: {error}")
 
 
 def load_rows(split: str, source_dir: Path | None = None) -> list[dict]:

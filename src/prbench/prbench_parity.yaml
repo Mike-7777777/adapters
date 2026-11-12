@@ -1,8 +1,8 @@
 # Parity runs on the 200-task subset. Agent and model are a proposal until
-# agreed with the Harbor team.
-#   uv run prbench --split parity --output-dir ../../datasets/prbench-parity
-#   harbor run -c prbench_parity.yaml
-# The judge comes from task.toml (JUDGE_MODEL, default o4-mini) and reads
+# agreed with the Harbor team. From the repository root:
+#   uv run --project src/prbench prbench --split parity --output-dir datasets/prbench-parity
+#   harbor run -c src/prbench/prbench_parity.yaml
+# The judge comes from task.toml (JUDGE_MODEL, default gpt-4.1) and reads
 # OPENAI_API_KEY / OPENAI_BASE_URL from the host environment.
 jobs_dir: jobs
 n_attempts: 1

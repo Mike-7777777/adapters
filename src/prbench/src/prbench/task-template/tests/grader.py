@@ -2,7 +2,7 @@
 
 The grader prompt, the conversation rendering, the verdict parsing and the
 scores follow scaleapi/PRBench at commit 7b2df0a (constants.py, util.py,
-evals.py; MIT License, Copyright (c) 2025 Scale AI): one judge call per
+evals.py; MIT License, Copyright (c) 2026 Scale): one judge call per
 criterion through the Responses API with no sampling parameters, and
 
     score            = sum(weights of met criteria) / sum(positive weights)
@@ -16,9 +16,11 @@ floored at 0. A single task's score can be negative, so reward.json holds
     score             the unclipped task score; average it, then floor at 0
     score_normalized  the min-normalized task score, in [0, 1]
 
-One deliberate departure: upstream counts a criterion as not met when the judge
+Two deliberate departures. Upstream counts a criterion as not met when the judge
 call still fails after its retries; here the verifier exits non-zero instead,
-so Harbor records a verifier error rather than a lowered score.
+so Harbor records a verifier error rather than a lowered score. And a missing
+or empty reply scores 0 without a judge call, where upstream would send the
+empty reply to the judge.
 
 ORACLE_MODE=true skips the judge and checks only that the task data loads and
 a non-empty reply was written (see the adapter README).
@@ -129,20 +131,20 @@ def judge(client, model: str, effort: str, prompt: str) -> tuple[str, int, str]:
     """One judge call with upstream's retry count and backoff.
 
     Returns the judge's text, the attempt that produced it and the model name
-    the endpoint reported.
+    the endpoint reported. A rejected key or an unknown model is not retried.
     """
     kwargs = {"reasoning": {"effort": effort}} if effort else {}
     for attempt in range(1, MAX_RETRIES + 1):
         try:
             out = client.responses.create(model=model, input=prompt, **kwargs)
-            if out.output_text:
-                return out.output_text, attempt, getattr(out, "model", None) or model
-            error = "empty judge output"
+            return out.output_text or "", attempt, getattr(out, "model", None) or model
         except Exception as exc:  # noqa: BLE001 - retried, then reported
             error = f"{type(exc).__name__}: {exc}"
+            if getattr(exc, "status_code", None) in (401, 403, 404):
+                break
         if attempt < MAX_RETRIES:
             time.sleep(RETRY_BACKOFF_SECONDS * attempt)
-    raise RuntimeError(f"judge failed after {MAX_RETRIES} attempts: {error}")
+    raise RuntimeError(f"judge failed after {attempt} attempts: {error}")
 
 
 def main() -> int:
@@ -174,7 +176,7 @@ def main() -> int:
         timeout=JUDGE_TIMEOUT_SECONDS,
         max_retries=0,
     )
-    model = os.environ.get("JUDGE_MODEL") or "o4-mini"
+    model = os.environ.get("JUDGE_MODEL") or "gpt-4.1"
     effort = os.environ.get("JUDGE_REASONING_EFFORT", "")
     workers = int(os.environ.get("JUDGE_CONCURRENCY") or 8)
 
