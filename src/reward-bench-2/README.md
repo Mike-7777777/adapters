@@ -4,15 +4,15 @@
 
 This adapter turns the 1,865 rows of RewardBench 2 into Harbor tasks, one task per row. A task shows a user prompt and candidate responses and asks the agent to judge them; the verifier compares the judgment with the benchmark's answer key. No model is called during verification.
 
-- Source: Hugging Face [`allenai/reward-bench-2`](https://huggingface.co/datasets/allenai/reward-bench-2) (ODC-BY), `test` split, pinned to revision `7ff08853` and checked by sha256.
+- Source: Hugging Face [`allenai/reward-bench-2`](https://huggingface.co/datasets/allenai/reward-bench-2) (ODC-BY), `test` split, pinned to commit `7ff08853`.
 - Original harness: [allenai/reward-bench](https://github.com/allenai/reward-bench) (Apache-2.0), `scripts/run_generative_v2.py` at commit `59f6ff70`. It calls a model API directly, with no agent.
 - Adapted size: 1,865 tasks, the full split. 1,763 best-of-4 tasks (Factuality 475, Precise IF 160, Math 183, Safety 450, Focus 495) and 102 Ties tasks.
 - This is the AI2 benchmark for reward models and LLM judges. It is unrelated to Meta's Multimodal RewardBench 2.
 
 > **Differences from the official harness.** This adapter departs from `allenai/reward-bench` in two places. Details are in [Notes & Caveats](#notes--caveats).
 >
-> 1. **Ties protocol.** The harness rates each Ties response in a separate model call. Here the agent rates all responses of a row (11 to 38) in one session and sees them side by side. Ties scores, and the overall score that includes Ties, are not directly comparable with the paper or the leaderboard.
-> 2. **Missing output.** In the harness a judge that returns nothing scores 0.25, like any output without a verdict. Here a missing or empty `judgment.txt` scores 0. A judgment without a verdict keeps the harness's 0.25.
+> 1. **Ties protocol.** The harness rates each Ties response in a separate model call ([`generative_v2.py` L492-L493][ties-loop]). Here the agent rates all responses of a row (11 to 38) in one session and sees them side by side. Ties scores, and the overall score that includes Ties, are not directly comparable with the paper or the leaderboard.
+> 2. **Missing output.** In the harness a judge that returns nothing scores 0.25, like any output without a verdict ([`process_judgement`][parse], [`run_generative_v2.py` L303-L308][quarter]). Here a missing or empty `judgment.txt` scores 0. A judgment without a verdict keeps the harness's 0.25.
 
 ## What is RewardBench 2?
 
@@ -25,14 +25,14 @@ Scores are computed per subset: accuracy for the five best-of-4 subsets and a co
 - Official judge prompt. A best-of-4 task carries the harness's four-way prompt verbatim, and the correct response sits at the position the harness draws for that row with its default seed 0. A check against the upstream functions found all 1,763 instructions and answer letters identical.
 - Deterministic verification. `tests/grade.py` uses the harness's verdict parser and reward mapping and runs on the Python standard library alone. The scorer accepts a trial's `grading.json` only when its reward equals the one Harbor recorded.
 - Official aggregation. `reward-bench-2-score` reads a Harbor job directory and prints the six subset scores and their mean, using a port of the harness's Ties scoring that matches the upstream function on 2,000 random inputs and on a published run.
-- Pinned data. The parquet file is fetched from a fixed revision and its sha256 is checked before any task is written; the answer positions are checked against a pinned digest of the official seed-0 positions.
+- Pinned data. The parquet file is fetched from a fixed commit of the dataset; the answer positions are checked against a pinned digest of the official seed-0 positions.
 - Parity subset. `--split parity` generates 302 tasks: all Ties tasks and 40 tasks per best-of-4 subset.
 
 ## Generated Task Structure
 
 ```
 reward-bench-2/
-├── <task_id>/                  # factuality-0, precise-if-12, ties-tied-3, ties-ref-3, ...
+├── <task_id>/                  # factuality-0, precise-if-0, ties-tied-3, ties-ref-3, ...
 │   ├── task.toml
 │   ├── instruction.md          # judge prompt with the candidate responses
 │   ├── environment/
@@ -96,17 +96,16 @@ Options:
 - `--task-ids ID ...`: only these tasks.
 - `--overwrite`: replace task directories that already exist.
 - `--split {full,parity}`: `parity` writes the 302-task parity subset.
-- `--source PATH`: a local copy of the pinned parquet file; its sha256 is still checked.
 
-Unit tests: `uv run pytest tests`. Set `RB2_SOURCE` to a local copy of the parquet file to include the full-dataset test.
+Unit tests: `uv run pytest tests`. Set `RB2_FULL_DATASET=1` to include the full-dataset test, which downloads the data.
 
 ## Comparison with Original Benchmark (Parity)
 
 Parity runs have not started; agent, model and number of runs are to be agreed with the Harbor team.
 
-Planned setup (Scenario 2): a fork of [allenai/reward-bench](https://github.com/allenai/reward-bench), to be published with the parity runs, adds `scripts/run_generative_v2_agent.py`. It loads the data, draws the seed-0 answer positions, builds the four-way prompt, parses verdicts and computes the Ties score with the harness's own functions; the model call is replaced by the agent running in a container with the instruction text of the Harbor task. Proposed ramp-up: the same pinned agent version and model on both sides, a 10-task sanity check, one full run, then three runs per side on the parity subset.
+Planned setup (Scenario 2): a fork of [allenai/reward-bench](https://github.com/allenai/reward-bench) adds a runner that loads the data, draws the seed-0 answer positions, builds the four-way prompt, parses verdicts and computes the Ties score with the harness's own functions; the model call is replaced by the agent running in a container with the instruction text of the Harbor task. The fork and its commands will be linked here when the parity runs are published. Proposed ramp-up: the same pinned agent version and model on both sides, a 10-task sanity check, then three runs per side on the parity subset.
 
-**Parity subset.** `--split parity` generates the 302 tasks listed in `src/reward_bench_2/parity_task_ids.txt`: all 102 Ties tasks, because the Ties score is defined over every ref/tied pair, and 40 tasks from each of the five best-of-4 subsets, taken in sha256(task id) order. `select_parity_ids` in `adapter.py` reproduces the list, and generation stops if the two differ.
+**Parity subset.** `--split parity` generates the 302 tasks listed in `src/reward_bench_2/parity_task_ids.txt`: all 102 Ties tasks, because the Ties score is defined over every ref/tied pair, and 40 tasks from each of the five best-of-4 subsets, taken in sha256(task id) order. The list is committed because the original side reads the same file; `select_parity_ids` in `adapter.py` reproduces it, and generation stops if the two differ.
 
 | Subset | Tasks | In parity subset |
 |---|---|---|
@@ -118,22 +117,11 @@ Planned setup (Scenario 2): a fork of [allenai/reward-bench](https://github.com/
 | Ties | 102 | 102 |
 | all | 1,865 | 302 |
 
-Original side, from the fork:
-
-```bash
-uv sync
-export ANTHROPIC_API_KEY=... CLAUDE_CODE_VERSION=<pinned version>
-uv run python scripts/run_generative_v2_agent.py \
-  --model <model id> --ids scripts/harbor_parity_ids.txt --num_threads 4
-```
-
-The run directory holds `results.json` with the six subset scores and their mean. `--dry_run_dir DIR` writes the instructions without starting an agent; for all 1,865 tasks they are byte-identical to the `instruction.md` files of this adapter.
-
 Harbor side, from the repository root:
 
 ```bash
 uv run --project src/reward-bench-2 reward-bench-2 --split parity --output-dir datasets/reward-bench-2-parity
-harbor run -c src/reward-bench-2/reward-bench-2_parity.yaml
+harbor run -p datasets/reward-bench-2-parity -a <agent> -m "<model>"
 uv run --project src/reward-bench-2 reward-bench-2-score jobs/<job_name>
 ```
 
@@ -157,9 +145,9 @@ Checks so far:
 
 **Instruction text.** The harness sends the judge prompt as a system message and the question with the four responses as a user message. The task joins them with a blank line, as the harness does for models without a system role (`--no_system_prompt`), and adds one closing sentence that names the output file. Every agent gets this prompt; the harness's separate prompt for Gemini models (`prompt_v2_gemini`, which asks for the verdict alone) is not used.
 
-**Ties (differs from the harness).** The harness rates each Ties response in a separate model call. One Harbor task holds one row, so the agent sees all responses of a prompt (11 to 38) and rates them in one session. A judge that sees the responses side by side can rate them relative to each other, so Ties scores from this adapter, and the overall score that includes them, are not directly comparable with the paper or the leaderboard. The task prompt is the harness's Ties rating prompt adjusted for several responses: the request for an explanation before the rating is dropped, and the ratings are written as JSON. Responses are shown in sha256 order of task id and index, because the dataset lists the correct ones first. The reward of a Ties task is the prompt's accuracy term: 1 if every correct response is rated above every incorrect one, else 0. The other terms of the Ties score compare prompts within the subset, and the scorer computes them from the ratings in `grading.json`. The harness's formula tops out at 1.01 (weights 0.3, 0.3, 0.2, 0.2 plus a 0.01 margin term), which is what the oracle ratings score. Parity runs apply the same Ties task on both sides.
+**Ties (differs from the harness).** The harness always scores Ties with ratings ([`run_generative_v2.py` L251-L252][ties-ratings]) and rates each response in a separate model call ([loop][ties-loop], [prompt][ties-prompt]). One Harbor task holds one row, so the agent sees all responses of a prompt (11 to 38) and rates them in one session. A judge that sees the responses side by side can rate them relative to each other, so Ties scores from this adapter, and the overall score that includes them, are not directly comparable with the paper or the leaderboard. The task prompt is the harness's Ties rating prompt adjusted for several responses: the request for an explanation before the rating is dropped, and the ratings are written as JSON. Responses are shown in sha256 order of task id and index, because the dataset lists the correct ones first. The reward of a Ties task is the prompt's accuracy term: 1 if every correct response is rated above every incorrect one, else 0. The other terms of the Ties score compare prompts within the subset, and the scorer computes them from the ratings in `grading.json`. The harness's formula tops out at 1.01 (weights 0.3, 0.3, 0.2, 0.2 plus a 0.01 margin term), which is what the oracle ratings score. Parity runs apply the same Ties task on both sides.
 
-**Unparseable and missing output (missing output differs from the harness).** A judgment without a verdict scores 0.25, as in the harness. A missing or empty `judgment.txt` scores 0, so an agent that does nothing gets no credit; in the harness a judge that returns nothing, or whose API call fails, scores 0.25 like any other output without a verdict. A Ties rating that is missing or not an integer from 1 to 10 counts as -1, as in the harness.
+**Unparseable and missing output (missing output differs from the harness).** A judgment without a verdict scores 0.25, as in the harness: [`process_judgement`][parse] returns `error`, which [maps to 0.25][quarter]. A missing or empty `judgment.txt` scores 0, so an agent that does nothing gets no credit; in the harness a judge that returns nothing, or whose API call fails ([`$ERROR$`][api-error]), scores 0.25 like any other output without a verdict. A Ties rating that is missing or not an integer from 1 to 10 counts as -1, as in the harness ([`get_single_rating`][invalid-rating]).
 
 **Verdict parsing.** The harness checks `[[A]]`, `[[B]]`, `[[C]]`, `[[D]]` in that order and takes the first one found anywhere in the judgment. The verifier does the same, so a judgment should contain only one bracketed verdict.
 
@@ -171,16 +159,15 @@ Checks so far:
 
 - Docker, and Harbor 0.25 or later.
 - `uv` for generating tasks and running the scorer; Python 3.13 is fetched by `uv` if needed.
-- Network access to Hugging Face when generating tasks (about 7 MB), unless `--source` is used. Running tasks needs no network beyond what the agent itself uses.
+- Network access to Hugging Face when generating tasks (about 7 MB; `HF_ENDPOINT` selects a mirror). Running tasks needs no network beyond what the agent itself uses.
 - API keys for the chosen agent.
 
 ## Troubleshooting
 
-- `sha256 mismatch`: the downloaded file differs from the pinned revision; delete the cached file under `~/.cache/harbor-reward-bench-2/` or fix the `--source` path.
-- `download failed after 3 attempts`: Hugging Face is unreachable; set `HF_ENDPOINT` to a mirror or pass `--source`.
+- Download errors from `huggingface_hub`: Hugging Face is unreachable; set `HF_ENDPOINT` to a mirror.
 - `numpy produced answer positions that differ from the pinned official seed-0 positions`: the installed numpy draws a different stream; use the version in `uv.lock`.
 - `trial(s) have no reward or grading.json`: those trials failed before or during verification; rerun them, or pass `--allow-ungraded` to score the rest.
-- `task ... was graded more than once`: the scorer takes one run at a time; pass a single job directory.
+- `task ... was graded more than once`: the job holds several attempts of a task; the scorer takes one run at a time.
 
 ## Citation
 
@@ -197,3 +184,11 @@ Checks so far:
 ## Authors & Contributions
 
 Adapter: Qumeng Sun (@Mike-7777777). Issues and questions: open an issue in this repository or ask in `#adapters-spam` on the Harbor Discord.
+
+[ties-ratings]: https://github.com/allenai/reward-bench/blob/59f6ff7005a9f9484727ca27f5383420875e5dbf/scripts/run_generative_v2.py#L251-L252
+[ties-loop]: https://github.com/allenai/reward-bench/blob/59f6ff7005a9f9484727ca27f5383420875e5dbf/rewardbench/generative_v2.py#L492-L493
+[ties-prompt]: https://github.com/allenai/reward-bench/blob/59f6ff7005a9f9484727ca27f5383420875e5dbf/rewardbench/generative_v2.py#L301-L317
+[parse]: https://github.com/allenai/reward-bench/blob/59f6ff7005a9f9484727ca27f5383420875e5dbf/rewardbench/generative_v2.py#L167-L177
+[quarter]: https://github.com/allenai/reward-bench/blob/59f6ff7005a9f9484727ca27f5383420875e5dbf/scripts/run_generative_v2.py#L303-L308
+[api-error]: https://github.com/allenai/reward-bench/blob/59f6ff7005a9f9484727ca27f5383420875e5dbf/rewardbench/generative_v2.py#L531-L549
+[invalid-rating]: https://github.com/allenai/reward-bench/blob/59f6ff7005a9f9484727ca27f5383420875e5dbf/rewardbench/generative_v2.py#L349-L391
