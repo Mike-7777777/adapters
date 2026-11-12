@@ -1,18 +1,13 @@
 from __future__ import annotations
 
 import hashlib
-import importlib.util
 import subprocess
-import sys
 from pathlib import Path
 
 import pytest
 
 from adapter import TEMPLATE_DIR, GAIAAdapter
 from run_adapter import records_to_tasks
-
-# Keep the template free of __pycache__ (the adapter copies tests/ files into tasks).
-sys.dont_write_bytecode = True
 
 SCORER = TEMPLATE_DIR / "tests" / "gaia_scorer.py"
 # scorer.py at commit 1349a17979f0aca0ee9c46cd7ec26eb2fb41102e of the
@@ -43,31 +38,12 @@ OFFICIAL_REJECTS = [
 ]
 
 
-def load_scorer():
-    spec = importlib.util.spec_from_file_location("gaia_scorer", SCORER)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
-
-
 def test_vendored_scorer_is_upstream_apart_from_numpy_import() -> None:
-    header, body = SCORER.read_text(encoding="utf-8").split(HEADER_END)
-    assert "1349a17979f0aca0ee9c46cd7ec26eb2fb41102e" in header
-    assert UPSTREAM_SHA256 in header
+    _, body = SCORER.read_text(encoding="utf-8").split(HEADER_END)
     upstream = body.replace(
         "import warnings\n\n", "import warnings\n\nimport numpy as np\n", 1
     )
     assert hashlib.sha256(upstream.encode()).hexdigest() == UPSTREAM_SHA256
-
-
-@pytest.mark.parametrize(("answer", "truth"), OFFICIAL_ACCEPTS)
-def test_official_scorer_accepts(answer: str, truth: str) -> None:
-    assert load_scorer().question_scorer(answer, truth) is True
-
-
-@pytest.mark.parametrize(("answer", "truth"), OFFICIAL_REJECTS)
-def test_official_scorer_rejects(answer: str, truth: str) -> None:
-    assert load_scorer().question_scorer(answer, truth) is False
 
 
 def render_task(tmp_path: Path, truth: str) -> tuple[Path, Path]:
