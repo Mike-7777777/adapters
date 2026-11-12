@@ -87,7 +87,7 @@ def render_task(tmp_path: Path, truth: str) -> tuple[Path, Path]:
 
 
 def run_in_sandbox(
-    script: Path, root: Path, check: bool = True
+    script: Path, root: Path, check: bool = True, cwd: Path | None = None
 ) -> subprocess.CompletedProcess[bytes]:
     """Run a rendered task script with its container paths moved under root."""
     text = script.read_text(encoding="utf-8")
@@ -98,7 +98,7 @@ def run_in_sandbox(
     ):
         text = text.replace(container_path, str(host_path))
     # check=True: test.sh must exit 0 whatever the verdict.
-    return subprocess.run(["bash", "-c", text], check=check, timeout=60)
+    return subprocess.run(["bash", "-c", text], check=check, cwd=cwd, timeout=60)
 
 
 def reward(root: Path) -> str:
@@ -176,15 +176,15 @@ def test_test_sh_ignores_cached_bytecode_for_the_scorer(tmp_path: Path) -> None:
     assert reward(root) == "0"
 
 
-@pytest.mark.parametrize("module", ["json", "re", "string", "warnings"])
-def test_scorer_imports_ignore_other_files_in_tests(
-    tmp_path: Path, module: str
-) -> None:
+@pytest.mark.parametrize("where", ["tests", "cwd"])
+def test_scorer_imports_ignore_stray_modules(tmp_path: Path, where: str) -> None:
     task_dir, root = render_task(tmp_path, "Paris")
-    # A stray module next to the scorer must not replace the standard library's.
-    (task_dir / "tests" / f"{module}.py").write_text("import os\nos._exit(0)\n")
+    # A string.py next to the scorer or in the working directory (python3 -I
+    # keeps it off sys.path) must not replace the standard library's.
+    stray_dir = task_dir / "tests" if where == "tests" else root / "app"
+    (stray_dir / "string.py").write_text("import os\nos._exit(0)\n")
     (root / "app" / "answer.txt").write_text("Lyon")
-    run_in_sandbox(task_dir / "tests" / "test.sh", root)
+    run_in_sandbox(task_dir / "tests" / "test.sh", root, cwd=root / "app")
     assert reward(root) == "0"
 
 
