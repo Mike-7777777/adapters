@@ -7,7 +7,7 @@
     "adapted_benchmark_size": 525,
     "parity_benchmark_size": 150,
     "number_of_runs": null,
-    "notes": "150-task subset stratified by use case and type (parity_task_ids.txt); judge gpt-5.4-2026-03-05, reasoning low, on both sides.",
+    "notes": "150-task subset stratified by use case and type (--split parity); judge gpt-5.4-2026-03-05, reasoning low, on both sides.",
     "original_parity_repo": "https://github.com/Mike-7777777/simple-evals/tree/harbor-parity",
     "adapter_pr": [
       "https://github.com/harbor-framework/adapters/pull/24"

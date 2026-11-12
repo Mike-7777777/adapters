@@ -58,7 +58,7 @@ def main() -> None:
         choices=SPLITS,
         default="full",
         help=f"'parity' generates only the {PARITY_SIZE}-task parity subset "
-        "(parity_task_ids.txt; see the README)",
+        "(see the README)",
     )
     args = parser.parse_args()
 

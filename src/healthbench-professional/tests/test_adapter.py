@@ -176,28 +176,14 @@ def test_parity_seats_follow_stratum_sizes():
     assert ids == adapter_module.select_parity_ids(list(reversed(rows)))
 
 
-def test_parity_split_generates_only_the_listed_tasks(tmp_path, monkeypatch):
+def test_parity_split_generates_only_the_selected_tasks(tmp_path, monkeypatch):
     rows = strata_rows({("a", "x"): 6, ("b", "y"): 4})
     expected = adapter_module.select_parity_ids(rows, size=5)
-    listed = tmp_path / "parity_task_ids.txt"
-    listed.write_text("\n".join(expected) + "\n")
     monkeypatch.setattr(adapter_module.hbp_data, "load_rows", lambda source=None: rows)
     monkeypatch.setattr(adapter_module, "PARITY_SIZE", 5)
-    monkeypatch.setattr(adapter_module, "PARITY_IDS_FILE", listed)
     out = tmp_path / "out"
     adapter_module.HealthBenchProfessionalAdapter(out, split="parity").run()
     assert sorted(p.name for p in out.iterdir()) == expected
-
-    listed.write_text("\n".join(expected[:-1]) + "\n")
-    with pytest.raises(RuntimeError, match="parity subset differs"):
-        adapter_module.HealthBenchProfessionalAdapter(
-            tmp_path / "o2", split="parity"
-        ).run()
-
-
-def test_committed_parity_list_has_150_unique_ids():
-    ids = adapter_module.PARITY_IDS_FILE.read_text().split()
-    assert len(ids) == len(set(ids)) == adapter_module.PARITY_SIZE
 
 
 def test_adapter_rejects_an_unknown_split(tmp_path):

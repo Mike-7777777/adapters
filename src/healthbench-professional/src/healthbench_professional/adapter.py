@@ -24,7 +24,6 @@ DATA_MODULE = PACKAGE_DIR / "hbp_data.py"
 NO_ORACLE = 'echo "no oracle reply was generated for this task" >&2\nexit 1'
 SPLITS = ("full", "parity")
 PARITY_SIZE = 150
-PARITY_IDS_FILE = PACKAGE_DIR / "parity_task_ids.txt"
 
 
 def select_parity_ids(rows: list[dict], size: int = PARITY_SIZE) -> list[str]:
@@ -81,12 +80,8 @@ class HealthBenchProfessionalAdapter:
     def run(self) -> None:
         rows = hbp_data.load_rows(self.source)
         if self.split == "parity":
-            ids = select_parity_ids(rows, PARITY_SIZE)
-            # The original-benchmark side reads the committed list, so both
-            # sides must run the same records.
-            if ids != PARITY_IDS_FILE.read_text().split():
-                raise RuntimeError(f"parity subset differs from {PARITY_IDS_FILE.name}")
-            rows = [r for r in rows if r["id"] in set(ids)]
+            ids = set(select_parity_ids(rows, PARITY_SIZE))
+            rows = [r for r in rows if r["id"] in ids]
         if self.task_ids:
             rows = [r for r in rows if r["id"] in self.task_ids]
         if self.limit is not None:
