@@ -21,13 +21,12 @@ fi
 # 10 = incorrect, anything else = the verifier could not grade.
 status=0
 python3 -I - <<'PY' || status=$?
-import importlib.util
+import runpy
 import sys
 
-# Load the scorer by path, so no other file in /tests can shadow a module it imports.
-spec = importlib.util.spec_from_file_location("gaia_scorer", "/tests/gaia_scorer.py")
-gaia_scorer = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(gaia_scorer)
+# Run the scorer from its source by path: nothing else in /tests is imported,
+# and no bytecode cache is read or written.
+question_scorer = runpy.run_path("/tests/gaia_scorer.py")["question_scorer"]
 
 with open("/tests/expected_answer.txt", encoding="utf-8") as f:
     expected_answer = f.read()
@@ -40,7 +39,7 @@ except OSError as exc:
 
 print(f"Agent answer: {agent_answer!r}")
 print(f"Expected answer: {expected_answer!r}")
-sys.exit(0 if gaia_scorer.question_scorer(agent_answer, expected_answer) else 10)
+sys.exit(0 if question_scorer(agent_answer, expected_answer) else 10)
 PY
 
 case "$status" in

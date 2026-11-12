@@ -159,6 +159,23 @@ def test_test_sh_rejects_an_unreadable_answer_file(tmp_path: Path) -> None:
     assert reward(root) == "0"
 
 
+def test_test_sh_ignores_cached_bytecode_for_the_scorer(tmp_path: Path) -> None:
+    task_dir, root = render_task(tmp_path, "Paris")
+    # An unchecked-hash .pyc is used without being compared to its source.
+    fake = tmp_path / "fake.py"
+    fake.write_text("question_scorer = lambda answer, truth: True\n")
+    compile_fake = (
+        "import importlib.util, py_compile, sys;"
+        "py_compile.compile(sys.argv[1], importlib.util.cache_from_source(sys.argv[2]),"
+        " invalidation_mode=py_compile.PycInvalidationMode.UNCHECKED_HASH)"
+    )
+    scorer = task_dir / "tests" / "gaia_scorer.py"
+    subprocess.run(["python3", "-I", "-c", compile_fake, fake, scorer], check=True)
+    (root / "app" / "answer.txt").write_text("Lyon")
+    run_in_sandbox(task_dir / "tests" / "test.sh", root)
+    assert reward(root) == "0"
+
+
 @pytest.mark.parametrize("module", ["json", "re", "string", "warnings"])
 def test_scorer_imports_ignore_other_files_in_tests(
     tmp_path: Path, module: str
