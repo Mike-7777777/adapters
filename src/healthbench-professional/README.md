@@ -73,7 +73,7 @@ Unit tests: `uv run pytest tests`.
 
 ## Comparison with Original Benchmark (Parity)
 
-Pending; runs start once the Harbor team provides keys. Plan reviewed in the adapter PR: Scenario 2, a claude-code sampler added to a fork of simple-evals ([Mike-7777777/simple-evals@harbor-parity](https://github.com/Mike-7777777/simple-evals/tree/harbor-parity)), `claude-code` 2.1.322 with Claude Sonnet 5.5 on both sides, the same judge (`gpt-5.4-2026-03-05`, reasoning low), a 10-task sanity check on both sides, then 3 runs per side on the parity subset. Benchmark score on each side: the mean unclipped task score, clipped to [0, 1] after averaging.
+Pending; runs start once the Harbor team provides keys. Plan reviewed in the adapter PR: Scenario 2, a claude-code sampler added to a fork of simple-evals ([Mike-7777777/simple-evals@harbor-parity](https://github.com/Mike-7777777/simple-evals/tree/harbor-parity)), `claude-code` 2.1.322 with Claude Haiku 5.5 on both sides, the same judge (`gpt-5.4-2026-03-05`, reasoning low), a 10-task sanity check on both sides, then 3 runs per side on the parity subset. Benchmark score on each side: the mean unclipped task score, clipped to [0, 1] after averaging.
 
 **Parity subset.** `--split parity` generates the 150 tasks listed in `src/healthbench_professional/parity_task_ids.txt`, which the simple-evals side reads too. They are stratified by use case and type: each of the 6 strata gets seats in proportion to its size (largest remainder), and within a stratum records are taken in sha256(id) order. `select_parity_ids` in `adapter.py` reproduces the list, and generation stops if the two differ.
 
@@ -99,7 +99,7 @@ harbor run -c healthbench-professional_parity.yaml
 
 | Agent | Model | Metric | Number of Runs | Dataset Size | Original Benchmark Performance | Harbor Adapter Performance |
 |---|---|---|---|---|---|---|
-| claude-code | claude-sonnet-5-5 | length-adjusted score | 3 | 150 (29% of 525) | pending | pending |
+| claude-code | claude-haiku-5-5 | length-adjusted score | 3 | 150 (29% of 525) | pending | pending |
 
 Checks so far:
 

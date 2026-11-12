@@ -1,4 +1,4 @@
-# Parity runs: claude-code with Claude Sonnet 5.5 on the 150-task subset.
+# Parity runs: claude-code with Claude Haiku 5.5 on the 150-task subset.
 #   uv run healthbench-professional --split parity --oracle-dir <dir> \
 #     --output-dir datasets/healthbench-professional-parity
 #   harbor run -c healthbench-professional_parity.yaml
@@ -20,7 +20,7 @@ environment:
     ANTHROPIC_BASE_URL: ${ANTHROPIC_BASE_URL}
 agents:
   - name: claude-code
-    model_name: anthropic/claude-sonnet-5-5
+    model_name: anthropic/claude-haiku-5-5
     kwargs:
       version: "2.1.322"  # same Claude Code build as the simple-evals side
 datasets:
