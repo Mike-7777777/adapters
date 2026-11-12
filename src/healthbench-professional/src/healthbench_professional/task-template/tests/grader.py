@@ -159,7 +159,9 @@ def main() -> int:
             except Exception as exc:  # noqa: BLE001 - retried, then reported
                 parsed = {"error": f"{type(exc).__name__}: {exc}"}
                 time.sleep(2 * attempt)
-            if parsed.get("criteria_met") in (True, False):
+            if isinstance(parsed, dict) and isinstance(
+                parsed.get("criteria_met"), bool
+            ):
                 break
         else:
             print(

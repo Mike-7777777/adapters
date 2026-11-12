@@ -97,6 +97,16 @@ def test_empty_response_is_judged_as_simple_evals_does(log_dir, judge):
     )
 
 
+@pytest.mark.parametrize("bad", ['{"criteria_met": 1}', "[]", "null", "not json"])
+def test_verdicts_that_are_not_booleans_are_retried(log_dir, judge, bad):
+    (log_dir.parent / "response.txt").write_text("x" * 2000)
+    judge(bad, '{"criteria_met": true}')
+    assert grader.main() == 0
+    items = json.loads((log_dir / "grading.json").read_text())["items"]
+    assert [item["attempts"] for item in items] == [2, 1]
+    assert json.loads((log_dir / "reward.json").read_text())["score"] == 0.6
+
+
 def fake_row(task_id: str) -> dict:
     return {
         "id": task_id,
