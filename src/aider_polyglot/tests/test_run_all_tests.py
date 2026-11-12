@@ -4,12 +4,14 @@ from __future__ import annotations
 
 import json
 import re
+import shutil
 import subprocess
 from pathlib import Path
 
 import pytest
 
 from aider_polyglot.adapter import AiderPolyglotAdapter
+from aider_polyglot.utils import get_test_command_with_test_dir
 
 # The sed call in tests/test.sh that re-enables disabled Java tests.
 JAVA_SED = re.compile(r"sed -i( -E)? '(s/@Disabled[^']*)'")
@@ -105,3 +107,18 @@ def test_rust_tasks_ship_the_whole_tests_directory(tmp_path: Path) -> None:
         },
     )
     assert (task_dir / "tests" / "tests" / "invalid" / "fixture.rs").is_file()
+
+
+def test_javascript_enables_xtest_only_as_aiders_harness_does() -> None:
+    # The program uses \b, which BSD sed (macOS) lacks; the task image has GNU sed.
+    sed = shutil.which("gsed") or "sed"
+    if subprocess.run([sed, "--version"], capture_output=True, check=False).returncode:
+        pytest.skip("needs GNU sed")
+    program = re.search(
+        r"sed -i '([^']*)'", get_test_command_with_test_dir("javascript")
+    ).group(1)
+    source = "xtest('a', f);\nxit('b', f);\ntest.skip('c', f);\n"
+    enabled = subprocess.run(
+        [sed, program], input=source, capture_output=True, text=True, check=True
+    ).stdout
+    assert enabled == "test('a', f);\nxit('b', f);\ntest.skip('c', f);\n"

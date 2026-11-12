@@ -257,12 +257,9 @@ fi"""
 echo "Copying JavaScript test files to workspace..."
 find $TEST_DIR -name "*test*.js" -o -name "*spec*.js" | xargs -I {} cp {} . 2>/dev/null || echo "No JS test files found"
 
-# Un-skip Exercism's disabled tests: the exercises ship all-but-the-first test as xtest()/xit()
-# (jest-skipped), so without this only the first test runs and a solution passing it scores a false
-# pass. aider's benchmark/npm-test.sh rewrites xtest( the same way; xit( is rewritten too, as
-# Exercism's own javascript-test-runner does, because the grep exercise disables its tests with
-# it. test.skip( stays skipped, as upstream intends.
-for f in *spec*.js *test*.js; do [ -f "$f" ] && sed -i 's/\bxtest(/test(/g; s/\bxit(/it(/g' "$f"; done
+# Exercism ships all-but-the-first test as xtest( (jest-skipped). Enable them with the rewrite
+# aider's benchmark/npm-test.sh uses; like aider, leave xit( and test.skip( skipped.
+for f in *spec*.js *test*.js; do [ -f "$f" ] && sed -i 's/\bxtest(/test(/g' "$f"; done
 
 echo "Running JavaScript tests..."
 if [ -f "package.json" ] && grep -q "jest" package.json; then
