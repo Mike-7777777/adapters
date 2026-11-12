@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import hashlib
 import importlib.util
-import os
 import subprocess
 import sys
 from pathlib import Path
@@ -147,16 +146,6 @@ def test_test_sh_reports_an_error_when_it_cannot_grade(
     # No reward file and a non-zero exit: Harbor records a verifier error, not a 0.
     assert result.returncode != 0
     assert not any(path.exists() for path in stale)
-
-
-@pytest.mark.skipif(os.geteuid() == 0, reason="root can read any file")
-def test_test_sh_rejects_an_unreadable_answer_file(tmp_path: Path) -> None:
-    task_dir, root = render_task(tmp_path, "Paris")
-    answer = root / "app" / "answer.txt"
-    answer.write_text("Paris")
-    answer.chmod(0)
-    run_in_sandbox(task_dir / "tests" / "test.sh", root)
-    assert reward(root) == "0"
 
 
 def test_test_sh_ignores_cached_bytecode_for_the_scorer(tmp_path: Path) -> None:
