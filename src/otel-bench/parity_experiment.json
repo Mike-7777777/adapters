@@ -9,7 +9,9 @@
     "number_of_runs": null,
     "notes": "Pending. Both sides run on Harbor with identical instruction, environment and test files; the original side is QuesmaOrg/otel-bench at bb6e21a.",
     "original_parity_repo": "https://github.com/QuesmaOrg/otel-bench",
-    "adapter_pr": [],
+    "adapter_pr": [
+      "https://github.com/harbor-framework/adapters/pull/87"
+    ],
     "dataset_pr": [],
     "parity_pr": [],
     "metrics": [
