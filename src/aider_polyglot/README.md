@@ -16,7 +16,7 @@ Aider Polyglot Benchmark targets practitioners who want to evaluate autonomous c
 
 - Config-driven exercise ingestion that reads `.meta/config.json` to map solution, test, example, and editor files without bespoke heuristics.
 - Language-aware workspace preparation (Gradle for Java, CMake for C++, Cargo for Rust, npm/Jest for JavaScript, etc.) with optional helper file backfilling.
-- Oracle reference files (`solution/oracle/files/` plus `manifest.txt`) copied from the exercise's example/reference implementation; `solution/solve.sh` copies them into `/app` for the oracle run. Harbor uploads `solution/` only for the oracle agent, so the reference never enters the agent's image (it is also in `tests/.meta/`, which the agent does not see).
+- Oracle reference files (`solution/oracle/files/` plus `manifest.txt`) copied from the exercise's example/reference implementation; `solution/solve.sh` copies them into `/app` for the oracle run. Harbor uploads `solution/` only for the oracle agent, so the reference never enters the agent's image.
 - Unified verifier scripts (`tests/test.sh`) that install dependencies and launch the correct test runner for each language.
 - Docker images synthesized from a template with per-language toolchains so Harbor jobs use consistent runtime environments.
 
