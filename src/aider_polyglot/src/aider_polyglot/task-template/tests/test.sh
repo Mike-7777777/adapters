@@ -31,7 +31,8 @@ if [ "{language}" = "java" ]; then
         echo "systemProp.org.gradle.daemon=false" >> gradle/wrapper/gradle-wrapper.properties
     fi
 
-    # Remove @Disabled(...) markers, with the pattern aider's harness uses
+    # Remove @Disabled(...) annotations. aider's harness uses this pattern plus a
+    # trailing \s*\n, so it deletes the line where this leaves it blank.
     if [ -d "$TEST_DIR" ]; then
         find "$TEST_DIR" -type f -name "*.java" -print0 \
           | xargs -0 -I {{}} sed -i -E 's/@Disabled\([^)]*\)//g' "{{}}" || true
