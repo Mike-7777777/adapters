@@ -1,6 +1,6 @@
 # HealthBench Professional → Harbor Adapter
 
-**Status: work in progress.** The generator, grader and task layout run end to end, and the oracle passes on all 525 tasks in Harbor 0.25.0. Parity experiments are still to come; see [Notes & Caveats](#notes--caveats).
+**Status.** The oracle passes on all 525 tasks in Harbor 0.25.0. Parity runs are next; see [Comparison with Original Benchmark](#comparison-with-original-benchmark-parity).
 
 ## Overview
 
@@ -14,7 +14,7 @@ This adapter turns the 525 public conversations of HealthBench Professional into
 
 [HealthBench Professional](https://arxiv.org/abs/2604.27470) (OpenAI, 2026) evaluates model replies to real conversations from clinicians using ChatGPT for Clinicians. The public set has 525 conversations (115 multi-turn) across consult, research and writing use cases, each with 1-5 physician-written rubric items (1135 in total, 213 of them negative).
 
-An LLM judge (`gpt-5.4-2026-03-05`, reasoning low) decides whether each rubric item is met. Task score = sum of met item points / sum of positive points, minus a length adjustment of 0.0147 per 500 characters above 2000. The benchmark score is the mean task score, clipped to [0, 1].
+An LLM judge (`gpt-5.4-2026-03-05`, reasoning low) decides whether each rubric item is met. Task score = sum of met item points / sum of positive points, minus a length adjustment of 0.0147 × (reply characters − 2000) / 500, which adds a little to replies under 2000 characters. The benchmark score is the mean task score, clipped to [0, 1].
 
 ## Adapter Features
 
@@ -44,18 +44,18 @@ The agent writes its reply to `/workspace/response.txt`.
 
 ## Run Evaluation / Harness in Harbor
 
-The verifier calls the judge through the OpenAI Responses API:
+The verifier calls the judge through the OpenAI Responses API. From the repository root:
 
 ```bash
 export OPENAI_API_KEY=...
 # optional: OPENAI_BASE_URL, GRADER_MODEL (default gpt-5.4-2026-03-05), HF_ENDPOINT
-uv run harbor run -p datasets/healthbench-professional -a <agent> -m "<model>"
+harbor run -p datasets/healthbench-professional -a <agent> -m "<model>"
 ```
 
 A single trial:
 
 ```bash
-uv run harbor trial start -p datasets/healthbench-professional/<task_id> -a <agent> -m "<model>"
+harbor trial start -p datasets/healthbench-professional/<task_id> -a <agent> -m "<model>"
 ```
 
 One full grading pass over 525 replies is 1135 judge calls.
@@ -63,11 +63,11 @@ One full grading pass over 525 replies is 1135 judge calls.
 ## Usage: Create Task Directories
 
 ```bash
-cd adapters/healthbench-professional
-uv run healthbench-professional --output-dir ../../datasets/healthbench-professional
+cd src/healthbench-professional
+uv run healthbench-professional --output-dir ../../datasets/healthbench-professional --oracle-dir <dir>
 ```
 
-Options: `--limit N`, `--task-ids ID ...`, `--overwrite`, `--source PATH` (a local copy of the pinned file; its sha256 is still checked), `--oracle-dir DIR` (`<task_id>.txt` oracle replies for `solution/solve.sh`), `--split {full,parity}` (`parity`: the 150-task parity subset).
+Options: `--limit N`, `--task-ids ID ...`, `--overwrite`, `--source PATH` (a local copy of the pinned file; its sha256 is still checked), `--oracle-dir DIR` (`<task_id>.txt` oracle replies for `solution/solve.sh`; without it `solve.sh` exits 1), `--split {full,parity}` (`parity`: the 150-task parity subset).
 
 Unit tests: `uv run pytest tests`.
 
@@ -89,12 +89,14 @@ Pending; runs start once the Harbor team provides keys. Plan reviewed in the ada
 
 Original side: see `HARBOR_PARITY.md` in the fork; its `healthbench_professional_parity_ids.txt` holds the same 150 ids.
 
-Harbor side, from this directory:
+Harbor side:
 
 ```bash
+cd src/healthbench-professional
 uv run healthbench-professional --split parity --oracle-dir <dir> \
-  --output-dir datasets/healthbench-professional-parity
-harbor run -c healthbench-professional_parity.yaml
+  --output-dir ../../datasets/healthbench-professional-parity
+cd ../..
+harbor run -c src/healthbench-professional/healthbench-professional_parity.yaml
 ```
 
 | Agent | Model | Metric | Number of Runs | Dataset Size | Original Benchmark Performance | Harbor Adapter Performance |
@@ -105,13 +107,13 @@ Checks so far:
 
 - Physician reference replies, all 525, graded with this grader's prompt and scoring (judge `gpt-5.4`, reasoning low): length-adjusted mean 0.429; the paper reports 0.437 (section 5.1).
 - Harbor 0.24.0, 3 tasks: every per-item verdict from `test.sh` matched a direct call to the simple-evals code.
-- Pointer layout, 11 tasks with the oracle agent: the 10 tasks with a rubric-targeted oracle reply scored 1.0 before length adjustment; the generated task directories contain no dataset text.
+- Generated task directories contain no dataset text (unit test with sentinel records).
 
 ## Notes & Caveats
 
 **Reward range.** A task score can be below 0 (negative rubric items, long replies) or above 1 (the length adjustment adds a little for replies under 2000 characters). The paper clips only the mean over tasks to [0, 1]; clipping each task first moves the physician mean from 0.429 to 0.490. The verifier therefore writes `reward.json` with two keys: `reward`, the task score clipped to [0, 1] as the guide requires of `test.sh`, and `score`, the unclipped task score. Harbor averages each key separately; the benchmark score is the mean of `score`, clipped to [0, 1].
 
-**Oracle solutions.** Physician replies score 0.43 on average, so they cannot serve as the oracle. Oracle replies are written against each rubric with AI assistance, kept at or under 2000 characters so the length adjustment does not apply, and accepted only after three consecutive full-score gradings. In Harbor 0.25.0 all 525 reach reward 1.0. They are passed in with `--oracle-dir` and embedded in each generated `solution/solve.sh`, which the agent never sees; they are AI-written text, not dataset records. The full set is uploaded with the parity results.
+**Oracle solutions.** Physician replies score 0.43 on average, so they cannot serve as the oracle. Oracle replies are written against each rubric with AI assistance, kept at or under 2000 characters so the length adjustment does not apply, and accepted only after three consecutive full-score gradings. In Harbor 0.25.0 all 525 reach reward 1.0. They are passed in with `--oracle-dir` and embedded in each generated `solution/solve.sh`, which the agent never sees; they are AI-written text, not dataset records. The 525 replies are not in this repository; they will be uploaded to parity-experiments with the parity results.
 
 **Judge snapshot.** Results are only comparable with the paper under `gpt-5.4-2026-03-05`. The local checks above used a third-party endpoint that reports the model as `gpt-5.4` without a snapshot.
 
@@ -124,7 +126,7 @@ Checks so far:
 ## Troubleshooting
 
 - `sha256 mismatch`: the downloaded file differs from the pinned revision; check `HF_ENDPOINT` or the `--source` file.
-- `download failed after 3 attempts`: Hugging Face is unreachable from the build or the verifier container; set `HF_ENDPOINT` to a mirror.
+- `download failed after 3 attempts`: Hugging Face is unreachable. `HF_ENDPOINT` points the generator and the verifier at a mirror; the image build always downloads from `huggingface.co`.
 - Verifier error with `grader failed after 4 attempts`: the judge kept returning unparseable output or errors; check `OPENAI_BASE_URL`, `GRADER_MODEL` and the key.
 - `no oracle reply was generated for this task`: the task was generated without `--oracle-dir`.
 

@@ -1,7 +1,6 @@
 # Parity runs: claude-code with Claude Haiku 5.5 on the 150-task subset.
-#   uv run healthbench-professional --split parity --oracle-dir <dir> \
-#     --output-dir datasets/healthbench-professional-parity
-#   harbor run -c healthbench-professional_parity.yaml
+# From the repository root, after generating the subset (see the README):
+#   harbor run -c src/healthbench-professional/healthbench-professional_parity.yaml
 # The judge (gpt-5.4-2026-03-05, reasoning low) comes from task.toml and reads
 # OPENAI_API_KEY / OPENAI_BASE_URL from the host environment.
 jobs_dir: jobs
