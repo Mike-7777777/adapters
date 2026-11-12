@@ -13,7 +13,7 @@
           "terminus-2"
         ],
         "adaptable": true,
-        "notes": "OpenTelemetry instrumentation tasks in 11 languages, authored in Harbor task format by Quesma. 26 tasks at upstream commit bb6e21a (23 at the January 2026 launch). The upstream README runs them with `harbor run`, by default with terminus-2."
+        "notes": "OpenTelemetry instrumentation tasks in 11 languages, authored in Harbor task format by Quesma. 26 tasks at upstream commit bb6e21a (23 at the January 2026 launch). The upstream README runs them with `harbor run`, by default with terminus-2; it pins no agent version."
       }
     ],
     "harbor_adapter": [
@@ -31,7 +31,7 @@
           "None"
         ],
         "parity_costs": null,
-        "notes": "Instruction, environment and test files are byte-identical to upstream; task.toml gains the [task] table, six upstream oracles carry a fix and ruby-microservices gets a new one. rust-distributed-context-propagation is excluded because its image no longer builds. Parity runs pending agreement on agent, model and number of runs."
+        "notes": "Instruction, environment and test files are byte-identical to upstream; task.toml gains the [task] table, six upstream oracles carry a fix and ruby-microservices gets a new one. rust-distributed-context-propagation is excluded because its image no longer builds. registry_benchmark_size is the size this adapter generates; the Hub package quesma/otel-bench currently holds Quesma's own 26-task publish of bb6e21a. Parity runs pending agreement on agent, model and number of runs."
       }
     ]
   }

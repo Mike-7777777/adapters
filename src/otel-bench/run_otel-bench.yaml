@@ -4,6 +4,9 @@
 jobs_dir: jobs
 n_attempts: 1
 timeout_multiplier: 1.0
+# The Swift and Rust images compile toolchains; the oracle validation ran with
+# this setting. Agent and verifier timeouts stay the tasks' own.
+environment_build_timeout_multiplier: 4.0
 # The verifiers start services and wait for fixed intervals, and the tasks request
 # up to 4 CPUs each. Keep concurrency at or below (host cores / 4).
 n_concurrent_trials: 2
