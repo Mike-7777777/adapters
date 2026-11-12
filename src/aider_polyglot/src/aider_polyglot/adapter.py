@@ -342,19 +342,13 @@ class AiderPolyglotAdapter:
             copy_relative(task.exercise_path, rel, tests_dir)
             print(f"Copied editor file to tests: {rel}")
 
-        if task.language == "cpp":
+        # Whole test directories, not only the declared test files: Rust macros'
+        # compile-fail tests read fixtures from tests/invalid/.
+        if task.language in ("cpp", "rust"):
             for dir_ in ("test", "tests"):
                 src = task.exercise_path / dir_
                 if src.exists():
                     shutil.copytree(src, tests_dir / dir_, dirs_exist_ok=True)
-
-        if task.language == "rust":
-            # Ship the whole tests/ directory, not only the declared test files:
-            # macros' compile-fail tests read fixtures from tests/invalid/, and
-            # they run now that ignored tests are included.
-            src = task.exercise_path / "tests"
-            if src.exists():
-                shutil.copytree(src, tests_dir / "tests", dirs_exist_ok=True)
 
         if task.language == "go":
             solution_basenames = {Path(p).name for p in (task.solution_files or [])}
