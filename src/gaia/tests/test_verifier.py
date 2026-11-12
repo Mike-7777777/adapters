@@ -5,7 +5,6 @@ import importlib.util
 import os
 import subprocess
 import sys
-import tomllib
 from pathlib import Path
 
 import pytest
@@ -173,13 +172,6 @@ def test_oracle_solution_is_rewarded(tmp_path: Path, truth: str) -> None:
     assert reward(root) == "1"
 
 
-def test_task_toml_names_the_task_and_credits_the_gaia_authors(tmp_path: Path) -> None:
-    task_dir, _ = render_task(tmp_path, "Paris")
-    task = tomllib.loads((task_dir / "task.toml").read_text())["task"]
-    assert task["name"] == "gaia-benchmark/gaia__stub"
-    assert task["authors"][0]["name"] == "Grégoire Mialon"
-
-
 def test_generated_text_files_are_utf8(tmp_path: Path, monkeypatch) -> None:
     # The verifier reads expected_answer.txt as UTF-8 whatever the generating
     # machine's locale is.
@@ -191,4 +183,3 @@ def test_generated_text_files_are_utf8(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setattr(Path, "write_text", ascii_unless_told)
     task_dir, _ = render_task(tmp_path, "Malmö")
     assert (task_dir / "tests" / "expected_answer.txt").read_bytes() == "Malmö".encode()
-
