@@ -66,7 +66,6 @@ class HealthBenchProfessionalAdapter:
         source: str | None = None,
         oracle_dir: Path | None = None,
         split: str = "full",
-        **kwargs,
     ):
         if split not in SPLITS:
             raise ValueError(f"split must be one of {SPLITS}, got {split!r}")

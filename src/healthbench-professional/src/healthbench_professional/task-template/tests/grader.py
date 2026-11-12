@@ -111,7 +111,6 @@ def main() -> int:
 
     client = OpenAI(base_url=os.environ.get("OPENAI_BASE_URL") or None)
     model = os.environ.get("GRADER_MODEL", "gpt-5.4-2026-03-05")
-    effort = os.environ.get("GRADER_REASONING_EFFORT", "low")
 
     record = load_record((TESTS / "task_id").read_text().strip())
     messages = record["conversation"]["messages"]
@@ -132,7 +131,7 @@ def main() -> int:
                 out = client.responses.create(
                     model=model,
                     input=[{"role": "user", "content": prompt}],
-                    reasoning={"effort": effort},
+                    reasoning={"effort": "low"},
                 )
                 parsed = parse_json_to_dict(out.output_text)
             except Exception as exc:  # noqa: BLE001 - retried, then reported

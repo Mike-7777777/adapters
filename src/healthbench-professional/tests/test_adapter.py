@@ -71,6 +71,7 @@ def test_empty_response_is_judged_as_simple_evals_does(log_dir, judge):
     calls = judge('{"criteria_met": false}')
     assert grader.main() == 0
     assert len(calls) == 2
+    assert calls[0]["reasoning"] == {"effort": "low"}
     assert calls[0]["input"][0]["content"].count("user: question\n\nassistant: \n") == 1
     assert json.loads((log_dir / "reward.json").read_text()) == pytest.approx(
         {"reward": 0.0588, "score": 0.0588}
