@@ -7,7 +7,13 @@ import logging
 import sys
 from pathlib import Path
 
-from .adapter import TASK_IDS, UPSTREAM_COMMIT, UPSTREAM_REPO, OTelBenchAdapter
+from .adapter import (
+    TASK_IDS,
+    UPSTREAM_COMMIT,
+    UPSTREAM_REPO,
+    OTelBenchAdapter,
+    check_source_commit,
+)
 
 DEFAULT_OUTPUT_DIR = Path.cwd() / "datasets" / "otel-bench"
 
@@ -40,7 +46,7 @@ def main() -> None:
         "--source-dir",
         type=Path,
         default=None,
-        help="Local copy of upstream datasets/otel at the pinned commit (skips the git fetch)",
+        help="Local git checkout of upstream datasets/otel at the pinned commit (skips the git fetch)",
     )
     parser.add_argument(
         "--list-tasks", action="store_true", help="Print the task ids and exit"
@@ -54,6 +60,8 @@ def main() -> None:
 
     adapter = OTelBenchAdapter(output_dir=args.output_dir, source_dir=args.source_dir)
     try:
+        if args.source_dir is not None:
+            check_source_commit(args.source_dir)
         written = adapter.run(
             task_ids=args.task_ids, limit=args.limit, overwrite=args.overwrite
         )

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import subprocess
 import tomllib
 from pathlib import Path
 
@@ -15,6 +16,7 @@ from otel_bench.adapter import (
     TASK_IDS,
     UPSTREAM_COMMIT,
     OTelBenchAdapter,
+    check_source_commit,
     render_task_toml,
 )
 
@@ -207,13 +209,51 @@ def test_limit_and_unknown_task_ids(upstream: Path, tmp_path: Path):
 
     with pytest.raises(ValueError, match="no-such-task"):
         generate(upstream, tmp_path, task_ids=["no-such-task"])
+    with pytest.raises(ValueError, match="--limit"):
+        generate(upstream, tmp_path, limit=-1)
 
 
-def test_missing_required_file_fails_generation(upstream: Path, tmp_path: Path):
-    (upstream / "cpp-simple" / "tests" / "test.sh").unlink()
+def test_failed_generation_leaves_no_task_directory(upstream: Path, tmp_path: Path):
+    (upstream / "cpp-simple" / "task.toml").write_text(
+        UPSTREAM_TASK_TOML + "\ngpus = 1\n"
+    )
 
-    with pytest.raises(FileNotFoundError, match="tests/test.sh"):
+    with pytest.raises(ValueError, match="gpus"):
         generate(upstream, tmp_path, task_ids=["cpp-simple"])
+    assert not (tmp_path / "out" / "cpp-simple").exists()
+
+
+def test_source_dir_must_be_a_checkout_of_the_pinned_commit(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    def git(*args: str) -> str:
+        identity = ["-c", "user.name=t", "-c", "user.email=t@example.com"]
+        result = subprocess.run(
+            [
+                "git",
+                "-C",
+                str(tmp_path),
+                "-c",
+                "commit.gpgsign=false",
+                *identity,
+                *args,
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        return result.stdout.strip()
+
+    with pytest.raises(ValueError, match="not at the pinned commit"):
+        check_source_commit(tmp_path)  # not a git checkout
+
+    git("init", "--quiet")
+    git("commit", "--quiet", "--allow-empty", "-m", "another commit")
+    with pytest.raises(ValueError, match="not at the pinned commit"):
+        check_source_commit(tmp_path)
+
+    monkeypatch.setattr(adapter, "UPSTREAM_COMMIT", git("rev-parse", "HEAD"))
+    check_source_commit(tmp_path)
 
 
 def test_every_oracle_directory_belongs_to_a_task():

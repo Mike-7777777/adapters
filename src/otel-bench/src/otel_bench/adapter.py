@@ -20,8 +20,9 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 UPSTREAM_REPO = "https://github.com/QuesmaOrg/otel-bench.git"
-# Last commit before upstream prepended a canary line to every task file
-# (5afbba1); the task content is otherwise identical. See README, Notes & Caveats.
+# Last commit before upstream prepended a canary line to instruction.md and five
+# other files of every task (5afbba1); the content is otherwise identical. See
+# README, Notes & Caveats.
 UPSTREAM_COMMIT = "bb6e21ad3caeceb82617dc5bf36e47deb33172ae"
 UPSTREAM_TASKS_DIR = "datasets/otel"
 
@@ -73,13 +74,21 @@ READINESS_WAIT_TASK_IDS = (
 # spare collector configs that are not part of a task and are left behind.
 TASK_COMPONENTS = ("task.toml", "instruction.md", "environment", "solution", "tests")
 
-REQUIRED_TASK_FILES = (
-    "task.toml",
-    "instruction.md",
-    "environment/Dockerfile",
-    "solution/solve.sh",
-    "tests/test.sh",
-)
+# Template placeholder -> key in the upstream task.toml. `version` is the only other
+# upstream field; generation fails on anything else.
+CARRIED_FIELDS = {
+    "author_name": ("metadata", "author_name"),
+    "author_email": ("metadata", "author_email"),
+    "keywords": ("metadata", "tags"),
+    "difficulty": ("metadata", "difficulty"),
+    "category": ("metadata", "category"),
+    "verifier_timeout_sec": ("verifier", "timeout_sec"),
+    "agent_timeout_sec": ("agent", "timeout_sec"),
+    "build_timeout_sec": ("environment", "build_timeout_sec"),
+    "cpus": ("environment", "cpus"),
+    "memory_mb": ("environment", "memory_mb"),
+    "storage_mb": ("environment", "storage_mb"),
+}
 
 PACKAGE_DIR = Path(__file__).resolve().parent
 TASK_TEMPLATE = PACKAGE_DIR / "task-template" / "task.toml"
@@ -117,6 +126,8 @@ class OTelBenchAdapter:
             raise ValueError(
                 f"Unknown task ids: {unknown}. Run with --list-tasks to see valid ids."
             )
+        if limit is not None and limit < 0:
+            raise ValueError(f"--limit must not be negative, got {limit}.")
         return selected[:limit] if limit is not None else selected
 
     def _generate(
@@ -136,12 +147,16 @@ class OTelBenchAdapter:
                     f"Task {task_id} not found at {source}; expected upstream "
                     f"commit {UPSTREAM_COMMIT}."
                 )
-            copy_task_components(source, target)
-            add_oracle(task_id, target)
-            (target / "task.toml").write_text(
-                render_task_toml(task_id, target / "task.toml"), encoding="utf-8"
-            )
-            check_task_dir(target)
+            try:
+                copy_task_components(source, target)
+                add_oracle(task_id, target)
+                (target / "task.toml").write_text(
+                    render_task_toml(task_id, target / "task.toml"), encoding="utf-8"
+                )
+            except BaseException:
+                # A half-written directory would be skipped as existing on the next run.
+                shutil.rmtree(target, ignore_errors=True)
+                raise
             written.append(target)
             logger.info("Wrote %s", target)
         return written
@@ -173,6 +188,21 @@ def fetch_upstream(workdir: Path) -> Path:
                 f"local checkout of {UPSTREAM_TASKS_DIR} at that commit."
             )
     return repo / UPSTREAM_TASKS_DIR
+
+
+def check_source_commit(source_dir: Path) -> None:
+    """Refuse a --source-dir that is not a git checkout of the pinned commit."""
+    result = subprocess.run(
+        ["git", "-C", str(source_dir), "rev-parse", "HEAD"],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    head = result.stdout.strip() if result.returncode == 0 else "not a git checkout"
+    if head != UPSTREAM_COMMIT:
+        raise ValueError(
+            f"{source_dir} is not at the pinned commit {UPSTREAM_COMMIT} ({head})."
+        )
 
 
 def copy_task_components(source: Path, target: Path) -> None:
@@ -225,42 +255,15 @@ def add_oracle(task_id: str, target: Path) -> None:
 def render_task_toml(task_id: str, upstream_task_toml: Path) -> str:
     """Re-render an upstream task.toml into the template, keeping every upstream value."""
     config = tomllib.loads(upstream_task_toml.read_text(encoding="utf-8"))
-    metadata = config["metadata"]
-    environment = config["environment"]
-    values = {
-        "task_id": task_id,
-        "source_commit": UPSTREAM_COMMIT,
-        "author_name": json.dumps(metadata["author_name"]),
-        "author_email": json.dumps(metadata["author_email"]),
-        "keywords": json.dumps(metadata["tags"]),
-        "difficulty": json.dumps(metadata["difficulty"]),
-        "category": json.dumps(metadata["category"]),
-        "verifier_timeout_sec": repr(config["verifier"]["timeout_sec"]),
-        "agent_timeout_sec": repr(config["agent"]["timeout_sec"]),
-        "build_timeout_sec": repr(environment["build_timeout_sec"]),
-        "cpus": repr(environment["cpus"]),
-        "memory_mb": repr(environment["memory_mb"]),
-        "storage_mb": repr(environment["storage_mb"]),
-    }
-    carried = {
-        ("version",),
-        *{
-            ("metadata", key)
-            for key in ("author_name", "author_email", "tags", "difficulty", "category")
-        },
-        ("verifier", "timeout_sec"),
-        ("agent", "timeout_sec"),
-        *{
-            ("environment", key)
-            for key in ("build_timeout_sec", "cpus", "memory_mb", "storage_mb")
-        },
-    }
-    dropped = sorted(_leaf_keys(config) - carried)
+    dropped = sorted(_leaf_keys(config) - {("version",), *CARRIED_FIELDS.values()})
     if dropped:
         raise ValueError(
             f"{upstream_task_toml} has fields the template does not carry: {dropped}. "
             "Extend task-template/task.toml before generating."
         )
+    values = {"task_id": task_id, "source_commit": UPSTREAM_COMMIT}
+    for placeholder, (table, key) in CARRIED_FIELDS.items():
+        values[placeholder] = json.dumps(config[table][key])
     rendered = TASK_TEMPLATE.read_text(encoding="utf-8")
     for key, value in values.items():
         rendered = rendered.replace(f"{{{key}}}", value)
@@ -276,9 +279,3 @@ def _leaf_keys(config: dict, prefix: tuple[str, ...] = ()) -> set[tuple[str, ...
         else:
             keys.add((*prefix, key))
     return keys
-
-
-def check_task_dir(task_dir: Path) -> None:
-    missing = [name for name in REQUIRED_TASK_FILES if not (task_dir / name).is_file()]
-    if missing:
-        raise FileNotFoundError(f"{task_dir} is missing required files: {missing}")
