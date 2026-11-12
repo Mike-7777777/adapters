@@ -124,10 +124,9 @@ def main() -> int:
             file=sys.stderr,
         )
         return 1
+    # A missing or empty reply is graded as "", as simple-evals grades whatever
+    # its sampler returns.
     response = RESPONSE_PATH.read_text() if RESPONSE_PATH.is_file() else ""
-    if not response.strip():
-        write_reward(0.0, {"error": "no response at /workspace/response.txt"}, mode)
-        return 0
 
     from openai import OpenAI
 

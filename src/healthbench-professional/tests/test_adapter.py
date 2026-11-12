@@ -4,6 +4,7 @@ import json
 import shutil
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -53,13 +54,47 @@ def test_unknown_mode_fails_before_grading(log_dir, monkeypatch):
     assert not log_dir.exists()
 
 
-def test_empty_response_scores_zero_in_the_selected_mode(log_dir, monkeypatch):
-    monkeypatch.setenv("REWARD_MODE", "both")
-    assert grader.main() == 0
-    assert json.loads((log_dir / "reward.json").read_text()) == {
-        "reward": 0.0,
-        "score": 0.0,
+@pytest.fixture
+def judge(log_dir, tmp_path, monkeypatch):
+    """Replace the OpenAI client; the last output repeats once the rest are used."""
+    record = {
+        "conversation": {"messages": [{"role": "user", "content": "question"}]},
+        "rubric_items": [
+            {"criterion_text": "good", "points": 5},
+            {"criterion_text": "bad", "points": -2},
+        ],
     }
+    (tmp_path / "task_id").write_text("abc\n")
+    monkeypatch.setattr(grader, "TESTS", tmp_path)
+    monkeypatch.setattr(grader, "load_record", lambda task_id: record)
+    calls = []
+
+    def install(*outputs):
+        def create(**request):
+            calls.append(request)
+            return SimpleNamespace(
+                output_text=outputs[min(len(calls), len(outputs)) - 1]
+            )
+
+        client = SimpleNamespace(responses=SimpleNamespace(create=create))
+        monkeypatch.setitem(
+            sys.modules, "openai", SimpleNamespace(OpenAI=lambda **kwargs: client)
+        )
+        return calls
+
+    return install
+
+
+def test_empty_response_is_judged_as_simple_evals_does(log_dir, judge):
+    # simple-evals grades whatever the sampler returns, "" included: no item
+    # met gives 0 - 0.0147 * ((0 - 2000) / 500).
+    calls = judge('{"criteria_met": false}')
+    assert grader.main() == 0
+    assert len(calls) == 2
+    assert calls[0]["input"][0]["content"].count("user: question\n\nassistant: \n") == 1
+    assert json.loads((log_dir / "reward.json").read_text()) == pytest.approx(
+        {"reward": 0.0588, "score": 0.0588}
+    )
 
 
 def fake_row(task_id: str) -> dict:
@@ -92,13 +127,11 @@ def test_adapter_defaults_to_both(tmp_path, monkeypatch):
     assert 'REWARD_MODE = "${HBP_REWARD_MODE:-both}"' in toml
 
 
-def test_grader_defaults_to_both(log_dir, monkeypatch):
+def test_grader_defaults_to_both(log_dir, judge, monkeypatch):
     monkeypatch.delenv("REWARD_MODE", raising=False)
+    judge('{"criteria_met": false}')
     assert grader.main() == 0
-    assert json.loads((log_dir / "reward.json").read_text()) == {
-        "reward": 0.0,
-        "score": 0.0,
-    }
+    assert set(json.loads((log_dir / "reward.json").read_text())) == {"reward", "score"}
 
 
 def test_adapter_rejects_an_unknown_mode(tmp_path):
