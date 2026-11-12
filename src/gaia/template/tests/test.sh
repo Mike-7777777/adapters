@@ -7,6 +7,8 @@ set -euo pipefail
 echo "=== STARTING GAIA TEST EXECUTION ==="
 
 mkdir -p /logs/verifier
+# Never trust a reward file that is already there.
+rm -f /logs/verifier/reward.txt /logs/verifier/reward.json
 
 if [ ! -f /app/answer.txt ]; then
     echo "ERROR: /app/answer.txt not found"

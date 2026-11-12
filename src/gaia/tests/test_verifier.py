@@ -136,10 +136,17 @@ def test_test_sh_reports_an_error_when_it_cannot_grade(
     task_dir, root = render_task(tmp_path, "Paris")
     (task_dir / "tests" / missing).unlink()
     (root / "app" / "answer.txt").write_text("Paris")
+    # A reward file left in /logs/verifier before the verifier runs must not survive.
+    stale = [
+        root / "logs" / "verifier" / name for name in ("reward.txt", "reward.json")
+    ]
+    stale[0].parent.mkdir(parents=True)
+    for path in stale:
+        path.write_text("1")
     result = run_in_sandbox(task_dir / "tests" / "test.sh", root, check=False)
     # No reward file and a non-zero exit: Harbor records a verifier error, not a 0.
     assert result.returncode != 0
-    assert not (root / "logs" / "verifier" / "reward.txt").exists()
+    assert not any(path.exists() for path in stale)
 
 
 @pytest.mark.skipif(os.geteuid() == 0, reason="root can read any file")
