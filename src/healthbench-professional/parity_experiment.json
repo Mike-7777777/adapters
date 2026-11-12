@@ -1,7 +1,7 @@
 [
   {
     "adapter_name": "healthbench-professional",
-    "agent": "<agent>@<version>",
+    "agent": "claude-code@2.1.322",
     "model": "claude-haiku-5-5",
     "date": "YYYY-MM-DD",
     "adapted_benchmark_size": 525,
