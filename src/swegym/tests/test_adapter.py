@@ -16,11 +16,7 @@ RECORD = {
     "version": "0.3",
     "base_commit": "deadbeef",
     "problem_statement": "Fix the failing test.",
-    "difficulty": "hard",
-    "patch": "",
     "test_patch": "",
-    "FAIL_TO_PASS": [],
-    "PASS_TO_PASS": [],
 }
 
 
