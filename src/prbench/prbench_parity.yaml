@@ -20,6 +20,6 @@ environment:
     ANTHROPIC_BASE_URL: ${ANTHROPIC_BASE_URL}
 agents:
   - name: claude-code
-    model_name: anthropic/claude-sonnet-5-5
+    model_name: anthropic/claude-haiku-5-5
 datasets:
   - path: datasets/prbench-parity
