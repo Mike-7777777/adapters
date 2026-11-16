@@ -145,6 +145,10 @@ For this adapter, parity was validated through a two-step transitive equivalence
   ```
 - Interpret pass rates as the percentage of tasks whose verifier exits successfully.
 
+### Oracle
+
+The adapter generates 225 tasks. A full oracle run on Docker with Harbor 0.24.0 passed 224 of 225; the one failure, `polyglot_rust_bowling`, passed when rerun alone.
+
 ## Notes & Caveats
 
 - The upstream Polyglot repository pulls substantial language toolchains (Gradle, npm, Cargo). Harbor jobs may need >12 GB of memory and can exceed 15 minutes for larger Java/C++ builds.
