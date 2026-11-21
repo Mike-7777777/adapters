@@ -27,7 +27,7 @@
         ],
         "parity_unmatching_agents": null,
         "parity_costs": "about $15",
-        "notes": "Oracle passes on all 525 tasks (Harbor 0.25.0). Parity on the 150-task stratified subset (--split parity), three runs per side, Harbor 0.26.0 with the separate verifier; the run ranges overlap. Parity cost: about $15, of which $2.90 is agent cost reported by Claude Code and the rest the gpt-5.4 judge (about $2 per run of 150 tasks), 10-task sanity runs included."
+        "notes": "Oracle reaches reward 1.0 on all 525 tasks: Harbor 0.25.0; Harbor 0.26.0 with the separate verifier, 523 on the first attempt and the other two in each of three more attempts. Parity on the 150-task stratified subset (--split parity), three runs per side, Harbor 0.26.0 with the separate verifier; the run ranges overlap. Parity cost: about $15, of which $2.90 is agent cost reported by Claude Code and the rest the gpt-5.4 judge (about $2 per run of 150 tasks), 10-task sanity runs included."
       }
     ]
   }

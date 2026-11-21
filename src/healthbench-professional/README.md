@@ -1,6 +1,6 @@
 # HealthBench Professional → Harbor Adapter
 
-**Status.** The oracle passes on all 525 tasks in Harbor 0.25.0. Parity on the 150-task subset matches the original harness: 3 runs per side, and the run ranges overlap; see [Comparison with Original Benchmark](#comparison-with-original-benchmark-parity).
+**Status.** The oracle reaches reward 1.0 on all 525 tasks in Harbor 0.26.0 with the separate verifier (two of them on a retry, see [Notes & Caveats](#notes--caveats)). Parity on the 150-task subset matches the original harness: 3 runs per side, and the run ranges overlap; see [Comparison with Original Benchmark](#comparison-with-original-benchmark-parity).
 
 ## Overview
 
@@ -107,7 +107,7 @@ harbor run -c src/healthbench-professional/healthbench-professional_parity.yaml
 |---|---|---|---|---|---|---|
 | claude-code | claude-haiku-5-5 | length-adjusted score | 3 | 150 (29% of 525) | 0.6165 ± 0.0171 | 0.5989 ± 0.0040 |
 
-Mean ± sample SEM over runs. Run scores: original 0.5974, 0.6506, 0.6014; Harbor 0.6058, 0.5987, 0.5920. The run ranges overlap. Per task, averaged over the three runs, Harbor minus original is −0.018 on average (standard error 0.016, 150 tasks). Every run graded all 150 tasks with no agent errors. Agent cost reported by Claude Code: $1.40 original, $1.46 Harbor; the judge costs about $2 per run.
+Mean ± sample SEM over runs. Run scores: original 0.5974, 0.6506, 0.6014; Harbor 0.6058, 0.5987, 0.5920. The run ranges overlap. Per task, averaged over the three runs, Harbor minus original is −0.018 on average (standard error 0.016, 150 tasks). Every run graded all 150 tasks. Claude Code exited normally in all 900 trials; in 1 original and 3 Harbor trials it ended without writing a reply, and the empty reply is graded as an empty string, as simple-evals does. Agent cost reported by Claude Code: $1.40 original, $1.46 Harbor; the judge costs about $2 per run.
 
 Other checks:
 
@@ -120,7 +120,7 @@ Other checks:
 
 **Reward range.** A task score can be below 0 (negative rubric items, long replies) or above 1 (the length adjustment adds a little for replies under 2000 characters). The paper clips only the mean over tasks to [0, 1]; clipping each task first moves the physician mean from 0.429 to 0.490. The verifier therefore writes `reward.json` with two keys: `reward`, the task score clipped to [0, 1] as the guide requires of `test.sh`, and `score`, the unclipped task score. Harbor averages each key separately; the benchmark score is the mean of `score`, clipped to [0, 1].
 
-**Oracle solutions.** Physician replies score 0.43 on average, so they cannot serve as the oracle. Oracle replies are written against each rubric with AI assistance, kept at or under 2000 characters so the length adjustment does not apply, and accepted only after three consecutive full-score gradings. In Harbor 0.25.0 all 525 reach reward 1.0. They are passed in with `--oracle-dir` and embedded in each generated `solution/solve.sh`, which the agent never sees; they are AI-written text, not dataset records. The 525 replies are not in this repository; they will be uploaded to parity-experiments with the parity results.
+**Oracle solutions.** Physician replies score 0.43 on average, so they cannot serve as the oracle. Oracle replies are written against each rubric with AI assistance, kept at or under 2000 characters so the length adjustment does not apply, and accepted only after three consecutive full-score gradings. In Harbor 0.25.0 all 525 reach reward 1.0. In Harbor 0.26.0 with the separate verifier, 523 reach 1.0 on the first attempt; in the other two the judge marked a negative rubric item as met, and the same replies reach 1.0 in each of three more attempts. They are passed in with `--oracle-dir` and embedded in each generated `solution/solve.sh`, which the agent never sees; they are AI-written text, not dataset records. The 525 replies are not in this repository; they will be uploaded to parity-experiments with the parity results.
 
 **Judge snapshot.** Results are only comparable with the paper under `gpt-5.4-2026-03-05`. The parity runs used an endpoint that serves `gpt-5.4` but not the dated name, and the local checks above a third-party endpoint that reports the model as `gpt-5.4` without a snapshot.
 
