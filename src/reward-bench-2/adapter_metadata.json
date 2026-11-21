@@ -26,10 +26,14 @@
         "added_agents": [
           "None"
         ],
-        "parity_matching_agents": [],
-        "parity_unmatching_agents": [],
-        "parity_costs": null,
-        "notes": "Oracle passes on all 1,865 tasks (Harbor 0.26.0, separate verifier). Parity is planned on the 302-task subset (--split parity): all 102 Ties tasks plus 40 tasks from each best-of-4 subset. Parity runs have not started. Differences from the official harness: (1) Ties: the harness rates each response in a separate model call, here the agent rates all responses of a row in one session, so Ties scores and the average are not directly comparable with the leaderboard; (2) a missing or empty judgment.txt scores 0, where the harness gives 0.25 to a judge that returns nothing."
+        "parity_matching_agents": [
+          "claude-code@2.1.330+claude-haiku-5-5"
+        ],
+        "parity_unmatching_agents": [
+          "None"
+        ],
+        "parity_costs": "$4.53",
+        "notes": "Oracle passes on all 1,865 tasks (Harbor 0.26.0, separate verifier). Parity on the 302-task subset (--split parity): all 102 Ties tasks plus 40 tasks from each best-of-4 subset, three runs per side; the run ranges of the average and of every subset overlap. Parity cost: $4.53 agent cost reported by Claude Code, including the 10-task sanity runs. Differences from the official harness: (1) Ties: the harness rates each response in a separate model call, here the agent rates all responses of a row in one session, so Ties scores and the average are not directly comparable with the leaderboard; (2) a missing or empty judgment.txt scores 0, where the harness gives 0.25 to a judge that returns nothing."
       }
     ]
   }

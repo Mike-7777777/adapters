@@ -103,9 +103,7 @@ Unit tests: `uv run pytest tests`. Set `RB2_FULL_DATASET=1` to include the full-
 
 ## Comparison with Original Benchmark (Parity)
 
-Parity runs have not started; agent, model and number of runs are to be agreed with the Harbor team.
-
-Planned setup (Scenario 2): a fork of [allenai/reward-bench](https://github.com/allenai/reward-bench) adds a runner that loads the data, draws the seed-0 answer positions, builds the four-way prompt, parses verdicts and computes the Ties score with the harness's own functions; the model call is replaced by the agent running in a container with the instruction text of the Harbor task. The fork and its commands will be linked here when the parity runs are published. Proposed ramp-up: the same pinned agent version and model on both sides, a 10-task sanity check, then three runs per side on the parity subset.
+Setup (Scenario 2): the fork [Mike-7777777/reward-bench, branch `harbor-parity`](https://github.com/Mike-7777777/reward-bench/tree/harbor-parity) adds `scripts/run_generative_v2_agent.py`, which loads the data, draws the seed-0 answer positions, builds the four-way prompt, parses verdicts and computes the Ties score with the harness's own functions. The model call is replaced by Claude Code running in a container with the instruction text of the Harbor task, launched the way Harbor's `claude-code` agent launches it. Both sides ran Claude Code 2.1.330 with `claude-haiku-5-5`: a 10-task sanity check, then three runs per side on the parity subset (Harbor 0.26.0, separate verifier). Every run finished all 302 tasks with no trial exceptions and no failed agent runs.
 
 **Parity subset.** `--split parity` generates the 302 tasks listed in `src/reward_bench_2/parity_task_ids.txt`: all 102 Ties tasks, because the Ties score is defined over every ref/tied pair, and 40 tasks from each of the five best-of-4 subsets, taken in sha256(task id) order. The list is committed because the original side reads the same file; `select_parity_ids` in `adapter.py` reproduces it, and generation stops if the two differ.
 
@@ -123,13 +121,34 @@ Harbor side, from the repository root:
 
 ```bash
 uv run --project src/reward-bench-2 reward-bench-2 --split parity --output-dir datasets/reward-bench-2-parity
-harbor run -p datasets/reward-bench-2-parity -a <agent> -m "<model>"
+harbor run -p datasets/reward-bench-2-parity -a claude-code -m anthropic/claude-haiku-5-5 --ak version=2.1.330
 uv run --project src/reward-bench-2 reward-bench-2-score jobs/<job_name>
 ```
 
+Original side, in the fork (needs Docker and `uv`):
+
+```bash
+uv sync
+export ANTHROPIC_API_KEY=... CLAUDE_CODE_VERSION=2.1.330
+uv run python scripts/run_generative_v2_agent.py \
+  --model claude-haiku-5-5 --ids scripts/harbor_parity_ids.txt --num_threads 8
+```
+
+Scores are mean ± sample SEM over three runs per side, in percent; per-run scores are in `parity_experiment.json`.
+
 | Agent | Model | Metric | Number of Runs | Dataset Size | Original Benchmark Performance | Harbor Adapter Performance |
 |---|---|---|---|---|---|---|
-| pending | pending | average over six subsets | pending | 302 (16% of 1,865) | pending | pending |
+| claude-code@2.1.330 | claude-haiku-5-5 | average over six subsets | 3 | 302 (16% of 1,865) | 83.08 ± 0.4531 | 82.52 ± 1.2146 |
+| claude-code@2.1.330 | claude-haiku-5-5 | Factuality | 3 | 40 | 76.04 ± 0.7507 | 75.83 ± 3.0046 |
+| claude-code@2.1.330 | claude-haiku-5-5 | Precise IF | 3 | 40 | 76.67 ± 1.6667 | 72.50 ± 1.4434 |
+| claude-code@2.1.330 | claude-haiku-5-5 | Math | 3 | 40 | 87.71 ± 0.2100 | 89.17 ± 0.8333 |
+| claude-code@2.1.330 | claude-haiku-5-5 | Safety | 3 | 40 | 86.67 ± 1.6667 | 85.83 ± 0.8333 |
+| claude-code@2.1.330 | claude-haiku-5-5 | Focus | 3 | 40 | 79.17 ± 0.8333 | 79.17 ± 2.2048 |
+| claude-code@2.1.330 | claude-haiku-5-5 | Ties | 3 | 102 | 92.23 ± 0.6755 | 92.61 ± 0.7818 |
+
+The run ranges overlap for the average and for every subset. Parity cost: $4.53 of agent cost reported by Claude Code, including the sanity runs.
+
+Links: [original benchmark](https://github.com/allenai/reward-bench), [parity fork](https://github.com/Mike-7777777/reward-bench/tree/harbor-parity), [adapter PR](https://github.com/harbor-framework/adapters/pull/84), [Hugging Face parity PR](https://huggingface.co/datasets/harborframework/parity-experiments/discussions/289) (the results bundle is ready; the upload is blocked because the dataset is over the Hugging Face limit of 1,000,000 files, and it will be pushed once the limit allows); the dataset PR is added when it is opened.
 
 Checks so far:
 

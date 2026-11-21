@@ -1,27 +1,133 @@
 [
   {
     "adapter_name": "reward-bench-2",
-    "agent": "<agent>@<version>",
-    "model": "<model>",
-    "date": "YYYY-MM-DD",
+    "agent": "claude-code@2.1.330",
+    "model": "claude-haiku-5-5",
+    "date": "2026-11-21",
     "adapted_benchmark_size": 1865,
     "parity_benchmark_size": 302,
-    "number_of_runs": null,
-    "notes": "Pending; original_parity_repo will point to the fork with the agent runner once the parity runs are published. 302-task subset (parity_task_ids.txt): all 102 Ties tasks plus 40 tasks from each of the five best-of-4 subsets. Scores on both sides come from the official aggregation: accuracy per best-of-4 subset, the Ties score over the 51 ref/tied pairs, and their unweighted mean. Both parity sides use the adapter's Ties task (all responses of a row rated in one session) and score a missing or empty judgment 0; both differ from the published harness, see the README.",
-    "original_parity_repo": "https://github.com/allenai/reward-bench",
+    "number_of_runs": 3,
+    "notes": "302-task subset (parity_task_ids.txt): all 102 Ties tasks plus 40 tasks from each of the five best-of-4 subsets. Claude Code 2.1.330 with claude-haiku-5-5 on both sides, three runs per side after a 10-task sanity check; Harbor 0.26.0 with the separate verifier. The original side is scripts/run_generative_v2_agent.py in the fork, which starts Claude Code in a container the way Harbor's claude-code agent does and scores with the harness's own functions. Scores on both sides come from the official aggregation: accuracy per best-of-4 subset (an unparseable judgment counts 0.25), the Ties score over the 51 ref/tied pairs, and their unweighted mean; Harbor scores are from reward-bench-2-score. Both sides use the adapter's Ties task (all responses of a row rated in one session) and score a missing or empty judgment 0; both differ from the published harness, see the README. Every run finished all 302 tasks with no trial exceptions and no failed agent runs. Agent cost reported by Claude Code: $2.19 original, $2.28 Harbor.",
+    "original_parity_repo": "https://github.com/Mike-7777777/reward-bench/tree/harbor-parity",
     "adapter_pr": [
       "https://github.com/harbor-framework/adapters/pull/84"
     ],
     "dataset_pr": [],
-    "parity_pr": [],
+    "parity_pr": [
+      "https://huggingface.co/datasets/harborframework/parity-experiments/discussions/289"
+    ],
     "metrics": [
       {
         "benchmark_name": "RewardBench 2",
         "metric": "average over six subsets",
-        "original": "<mean +/- sample_SEM, e.g. 45.2% +/- 1.3%>",
-        "harbor": "<mean +/- sample_SEM, e.g. 44.8% +/- 1.1%>",
-        "original_runs": [],
-        "harbor_runs": []
+        "original": "83.08 ± 0.4531",
+        "harbor": "82.52 ± 1.2146",
+        "original_runs": [
+          83.78,
+          83.22,
+          82.23
+        ],
+        "harbor_runs": [
+          80.18,
+          84.26,
+          83.11
+        ]
+      },
+      {
+        "benchmark_name": "RewardBench 2",
+        "metric": "Factuality",
+        "original": "76.04 ± 0.7507",
+        "harbor": "75.83 ± 3.0046",
+        "original_runs": [
+          77.5,
+          75.63,
+          75.0
+        ],
+        "harbor_runs": [
+          70.0,
+          80.0,
+          77.5
+        ]
+      },
+      {
+        "benchmark_name": "RewardBench 2",
+        "metric": "Precise IF",
+        "original": "76.67 ± 1.6667",
+        "harbor": "72.50 ± 1.4434",
+        "original_runs": [
+          75.0,
+          80.0,
+          75.0
+        ],
+        "harbor_runs": [
+          70.0,
+          75.0,
+          72.5
+        ]
+      },
+      {
+        "benchmark_name": "RewardBench 2",
+        "metric": "Math",
+        "original": "87.71 ± 0.2100",
+        "harbor": "89.17 ± 0.8333",
+        "original_runs": [
+          87.5,
+          88.13,
+          87.5
+        ],
+        "harbor_runs": [
+          87.5,
+          90.0,
+          90.0
+        ]
+      },
+      {
+        "benchmark_name": "RewardBench 2",
+        "metric": "Safety",
+        "original": "86.67 ± 1.6667",
+        "harbor": "85.83 ± 0.8333",
+        "original_runs": [
+          90.0,
+          85.0,
+          85.0
+        ],
+        "harbor_runs": [
+          87.5,
+          85.0,
+          85.0
+        ]
+      },
+      {
+        "benchmark_name": "RewardBench 2",
+        "metric": "Focus",
+        "original": "79.17 ± 0.8333",
+        "harbor": "79.17 ± 2.2048",
+        "original_runs": [
+          80.0,
+          77.5,
+          80.0
+        ],
+        "harbor_runs": [
+          75.0,
+          82.5,
+          80.0
+        ]
+      },
+      {
+        "benchmark_name": "RewardBench 2",
+        "metric": "Ties",
+        "original": "92.23 ± 0.6755",
+        "harbor": "92.61 ± 0.7818",
+        "original_runs": [
+          92.69,
+          93.1,
+          90.9
+        ],
+        "harbor_runs": [
+          91.09,
+          93.07,
+          93.68
+        ]
       }
     ]
   }
