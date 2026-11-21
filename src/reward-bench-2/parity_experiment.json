@@ -14,7 +14,8 @@
     ],
     "dataset_pr": [],
     "parity_pr": [
-      "https://huggingface.co/datasets/harborframework/parity-experiments/discussions/289"
+      "https://huggingface.co/datasets/harborframework/parity-experiments/discussions/289",
+      "https://huggingface.co/datasets/mike-7777777/harbor-parity-experiments/tree/0fdc8d523e2466bc1153771907754650a4c9d738/adapters/reward-bench-2"
     ],
     "metrics": [
       {
