@@ -33,6 +33,10 @@ OFFICIAL_POSITIONS_SHA256 = (
 OFFICIAL_BEST_OF_4_ROWS = 1763
 SPLITS = ("full", "parity")
 PARITY_PER_SUBSET = 40
+OUTPUT_PATHS = {
+    "rankings": "/workspace/judgment.txt",
+    "ratings": "/workspace/ratings.json",
+}
 ORACLE_CORRECT_RATING = 10
 ORACLE_INCORRECT_RATING = 1
 
@@ -219,6 +223,7 @@ class RewardBench2Adapter:
                     "subset_slug": slugify(spec["subset"]),
                     "source_id": spec["source_id"],
                     "protocol": spec["protocol"],
+                    "output_path": OUTPUT_PATHS[spec["protocol"]],
                 },
             )
         )
@@ -236,7 +241,7 @@ class RewardBench2Adapter:
             template, {"judge_prompt": prompts.ranking_prompt(row["prompt"], answers)}
         )
         answer = LETTERS[spec["position"]]
-        oracle = f"echo '[[{answer}]]' > /workspace/judgment.txt"
+        oracle = f"echo '[[{answer}]]' > {OUTPUT_PATHS['rankings']}"
         return instruction, {"answer": answer}, oracle
 
     def _ratings_task(self, spec: dict, template: str) -> tuple[str, dict, str]:
@@ -258,5 +263,5 @@ class RewardBench2Adapter:
             else ORACLE_INCORRECT_RATING
             for position, original_index in enumerate(order)
         }
-        oracle = f"echo '{json.dumps(ratings)}' > /workspace/ratings.json"
+        oracle = f"echo '{json.dumps(ratings)}' > {OUTPUT_PATHS['ratings']}"
         return instruction, {"num_correct": num_correct, "order": order}, oracle

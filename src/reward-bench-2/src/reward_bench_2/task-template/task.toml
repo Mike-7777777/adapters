@@ -1,4 +1,6 @@
 schema_version = "1.0"
+# The agent's output file, copied into the separate verifier container.
+artifacts = ["{output_path}"]
 
 [task]
 name = "allenai/reward-bench-2__{task_id}"
@@ -21,6 +23,7 @@ source_id = "{source_id}"
 protocol = "{protocol}"
 
 [verifier]
+environment_mode = "separate"
 timeout_sec = 120.0
 
 [agent]

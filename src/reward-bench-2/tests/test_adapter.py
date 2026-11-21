@@ -6,6 +6,7 @@ import math
 import os
 import re
 import sys
+import tomllib
 from pathlib import Path
 
 import pytest
@@ -347,6 +348,22 @@ def test_generated_task_layout(fake_data, tmp_path):
         toml = (task_dir / "task.toml").read_text()
         assert f'name = "allenai/reward-bench-2__{task_dir.name}"' in toml
         assert not re.search(r"\{\w+\}", toml)
+
+
+def test_verifier_is_separate_and_gets_the_agent_output(fake_data, tmp_path):
+    """The grader runs in its own container, so the one file it reads is an artifact."""
+    RewardBench2Adapter(tmp_path).run()
+    outputs = {
+        "rankings": "/workspace/judgment.txt",
+        "ratings": "/workspace/ratings.json",
+    }
+    for task_dir in tmp_path.iterdir():
+        config = tomllib.loads((task_dir / "task.toml").read_text())
+        assert config["verifier"]["environment_mode"] == "separate"
+        assert config["artifacts"] == [outputs[config["metadata"]["protocol"]]]
+        assert (
+            config["artifacts"][0] in (task_dir / "solution" / "solve.sh").read_text()
+        )
 
 
 def test_ranking_instruction_is_the_official_prompt_with_the_chosen_at_the_answer(
