@@ -1,27 +1,63 @@
 [
   {
     "adapter_name": "prbench",
-    "agent": "<agent>@<version>",
-    "model": "<model>",
-    "date": "YYYY-MM-DD",
+    "agent": "claude-code@2.1.322",
+    "model": "claude-haiku-5-5",
+    "date": "2026-11-21",
     "adapted_benchmark_size": 1100,
     "parity_benchmark_size": 200,
-    "number_of_runs": null,
-    "notes": "Not run yet. 200-task subset, 100 per domain, stratified by hard-subset membership and topic (parity_task_ids.txt); the same judge model on both sides.",
-    "original_parity_repo": null,
+    "number_of_runs": 2,
+    "notes": "Runs 1 and 2 of 3; run 3 will be added. 200-task subset, 100 per domain, stratified by hard-subset membership and topic (parity_task_ids.txt). Same agent build, model and judge on both sides: Claude Code 2.1.322, claude-haiku-5-5, judge gpt-5.6-terra (o4-mini is not served on the parity endpoint and gpt-4.1 is refused there); the endpoint reported these model names for every agent and judge call. Original side: the fork's harbor_parity/run_agent.py collects the replies, the fork's evals.py grades them with the upstream scoring (final_response_source: prefilled). Metric: mean unclipped task score floored at 0 (mean_clipped), in percent. Every task graded on both sides; no Harbor exceptions, failed judge calls or agent errors; one original-side run ended without a reply and is kept. Cost of runs 1 and 2: at most $202 on both sides, agent and judge. Parity files: the shared-dataset PR in parity_pr cannot take uploads while harborframework/parity-experiments is over the Hugging Face limit of 1,000,000 files (harbor-framework/adapters#129); the same adapters/prbench/ folder is at https://huggingface.co/datasets/mike-7777777/harbor-parity-experiments/tree/f1f1a377264e916ab282681e2b5477e616dec97c/adapters/prbench (pinned commit), with SHA256 checksums in manifests/prbench.sha256.",
+    "original_parity_repo": "https://github.com/Mike-7777777/PRBench/tree/harbor-parity",
     "adapter_pr": [
       "https://github.com/harbor-framework/adapters/pull/83"
     ],
     "dataset_pr": [],
-    "parity_pr": [],
+    "parity_pr": [
+      "https://huggingface.co/datasets/harborframework/parity-experiments/discussions/290"
+    ],
     "metrics": [
       {
         "benchmark_name": "PRBench",
         "metric": "mean_clipped",
-        "original": "<mean +/- sample_SEM, e.g. 45.2% +/- 1.3%>",
-        "harbor": "<mean +/- sample_SEM, e.g. 44.8% +/- 1.1%>",
-        "original_runs": [],
-        "harbor_runs": []
+        "original": "47.35 ± 0.06",
+        "harbor": "47.37 ± 0.33",
+        "original_runs": [
+          47.29,
+          47.41
+        ],
+        "harbor_runs": [
+          47.7,
+          47.04
+        ]
+      },
+      {
+        "benchmark_name": "PRBench Finance",
+        "metric": "mean_clipped",
+        "original": "48.44 ± 0.66",
+        "harbor": "48.25 ± 0.10",
+        "original_runs": [
+          49.09,
+          47.78
+        ],
+        "harbor_runs": [
+          48.15,
+          48.35
+        ]
+      },
+      {
+        "benchmark_name": "PRBench Legal",
+        "metric": "mean_clipped",
+        "original": "46.27 ± 0.78",
+        "harbor": "46.49 ± 0.76",
+        "original_runs": [
+          45.49,
+          47.05
+        ],
+        "harbor_runs": [
+          47.25,
+          45.73
+        ]
       }
     ]
   }

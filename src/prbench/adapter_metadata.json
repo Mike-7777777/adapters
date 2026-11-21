@@ -36,12 +36,14 @@
         "added_agents": [
           "None"
         ],
-        "parity_matching_agents": [],
+        "parity_matching_agents": [
+          "claude-code@2.1.322+claude-haiku-5-5"
+        ],
         "parity_unmatching_agents": [
           "None"
         ],
-        "parity_costs": null,
-        "notes": "Oracle run (ORACLE_MODE=true) and nop run cover all 1100 tasks. Parity is planned on a 200-task subset (--split parity), 100 per domain, stratified by hard-subset membership and topic; not run yet."
+        "parity_costs": "$202",
+        "notes": "Oracle run (ORACLE_MODE=true) and nop run cover all 1100 tasks. Parity on a 200-task subset (--split parity), 100 per domain, stratified by hard-subset membership and topic: runs 1 and 2 of 3 done, run ranges overlap on both domains and overall. parity_costs is an upper bound for runs 1 and 2 (the endpoint's total usage over the two runs)."
       }
     ]
   }

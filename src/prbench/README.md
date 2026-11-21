@@ -86,7 +86,7 @@ Unit tests: `uv run pytest tests`.
 
 ## Comparison with Original Benchmark (Parity)
 
-Pending; the plan below is a proposal until agreed with the Harbor team. Scenario 2: the original harness has no agent, so a fork of scaleapi/PRBench gets a runner that produces each reply with the same agent, instruction and `conversation.md` as the Harbor task, then grades the replies through the original `evals.py` with `final_response_source: prefilled`. Both sides use the same judge model. Benchmark score on each side: the mean unclipped task score, floored at 0 after averaging.
+Scenario 2: the original harness has no agent, so a [fork of scaleapi/PRBench](https://github.com/Mike-7777777/PRBench/tree/harbor-parity) gets a runner that produces each reply with the same agent, instruction and `conversation.md` as the Harbor task, then grades the replies through the original `evals.py` with `final_response_source: prefilled`. Both sides use the same judge model. Benchmark score on each side: the mean unclipped task score, floored at 0 after averaging.
 
 **Parity subset.** `--split parity` generates the 200 tasks listed in `src/prbench/parity_task_ids.txt`, 100 per domain, which the original side reads too. Within a domain the subset is stratified by hard-subset membership and topic: each stratum gets seats in proportion to its size (largest remainder), and within a stratum records are taken in sha256 order of `<domain>-<task>`. `select_parity_ids` in `adapter.py` reproduces the list, and generation stops if the two differ.
 
@@ -97,9 +97,25 @@ uv run --project src/prbench prbench --split parity --output-dir datasets/prbenc
 harbor run -c src/prbench/prbench_parity.yaml
 ```
 
+Original side, from the fork's `harbor-parity` branch (`HARBOR_PARITY.md` there), one `--trial` per run:
+
+```bash
+CLAUDE_CODE_VERSION=2.1.322 python harbor_parity/run_agent.py --model claude-haiku-5-5 --trial 1 --out harbor_runs/run1 --judge_model gpt-5.6-terra
+python evals.py harbor_runs/run1/config_finance.yaml
+python evals.py harbor_runs/run1/config_legal.yaml
+```
+
+Runs 1 and 2 (2026-11-21): Claude Code 2.1.322 with `claude-haiku-5-5` and the judge `gpt-5.6-terra` (`JUDGE_MODEL=gpt-5.6-terra`) on both sides. Scores are the benchmark score in percent, mean ± sample SEM over runs; run 3 will be added.
+
 | Agent | Model | Metric | Number of Runs | Dataset Size | Original Benchmark Performance | Harbor Adapter Performance |
 |---|---|---|---|---|---|---|
-| pending | pending | mean_clipped | 3 | 200 (18% of 1,100) | pending | pending |
+| claude-code@2.1.322 | claude-haiku-5-5 | mean_clipped, both domains | 2 | 200 (18% of 1,100) | 47.35 ± 0.06 | 47.37 ± 0.33 |
+| claude-code@2.1.322 | claude-haiku-5-5 | mean_clipped, Finance | 2 | 100 | 48.44 ± 0.66 | 48.25 ± 0.10 |
+| claude-code@2.1.322 | claude-haiku-5-5 | mean_clipped, Legal | 2 | 100 | 46.27 ± 0.78 | 46.49 ± 0.76 |
+
+Per-run scores, original / Harbor: both domains 47.29, 47.41 / 47.70, 47.04; Finance 49.09, 47.78 / 48.15, 48.35; Legal 45.49, 47.05 / 47.25, 45.73. The run ranges overlap in all three rows. Every task was graded on both sides: no Harbor exceptions, no failed judge calls, no agent errors. One original-side agent run (run 1, `legal-740a326c927c1ce16ffee6b8`) ended without writing a reply; it is kept and graded as upstream grades it (task score 0.09). Cost of runs 1 and 2 on both sides, agent and judge: at most $202 (the endpoint's total usage over the two runs), of which the agent is $5.15 by Claude Code's own report.
+
+Links: original benchmark [scaleapi/PRBench](https://github.com/scaleapi/PRBench); parity fork [Mike-7777777/PRBench `harbor-parity`](https://github.com/Mike-7777777/PRBench/tree/harbor-parity); replies, agent logs and grading results of both runs on both sides, the oracle runs, every earlier attempt and the aggregation script, for [harborframework/parity-experiments discussion #290](https://huggingface.co/datasets/harborframework/parity-experiments/discussions/290) (`adapters/prbench/`); that dataset is over the Hugging Face limit of 1,000,000 files ([#129](https://github.com/harbor-framework/adapters/issues/129)), so until the upload goes through, the same folder is at [mike-7777777/harbor-parity-experiments](https://huggingface.co/datasets/mike-7777777/harbor-parity-experiments/tree/f1f1a377264e916ab282681e2b5477e616dec97c/adapters/prbench), pinned to a commit, with SHA256 checksums in `manifests/prbench.sha256`; adapter PR [#83](https://github.com/harbor-framework/adapters/pull/83); dataset PR to follow.
 
 Checks so far; only the last one calls a model:
 

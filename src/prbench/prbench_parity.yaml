@@ -1,5 +1,5 @@
-# Parity runs on the 200-task subset. Agent and model are a proposal until
-# agreed with the Harbor team. From the repository root:
+# Parity runs on the 200-task subset; runs 1 and 2 used this file with
+# JUDGE_MODEL=gpt-5.6-terra. From the repository root:
 #   uv run --project src/prbench prbench --split parity --output-dir datasets/prbench-parity
 #   harbor run -c src/prbench/prbench_parity.yaml
 # The judge comes from task.toml (JUDGE_MODEL, default gpt-4.1) and reads
