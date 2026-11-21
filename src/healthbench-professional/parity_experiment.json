@@ -3,11 +3,11 @@
     "adapter_name": "healthbench-professional",
     "agent": "claude-code@2.1.322",
     "model": "claude-haiku-5-5",
-    "date": "YYYY-MM-DD",
+    "date": "2026-11-21",
     "adapted_benchmark_size": 525,
     "parity_benchmark_size": 150,
-    "number_of_runs": null,
-    "notes": "150-task subset stratified by use case and type (--split parity); judge gpt-5.4-2026-03-05, reasoning low, on both sides.",
+    "number_of_runs": 3,
+    "notes": "150-task subset stratified by use case and type (--split parity). Claude Code 2.1.322 with claude-haiku-5-5 on both sides, three runs per side after a 10-task sanity check; Harbor 0.26.0 with the separate verifier. Judge gpt-5.4, reasoning low, on both sides (the parity endpoint does not serve the dated name gpt-5.4-2026-03-05 that simple-evals uses). Run score: the mean unclipped task score (length-adjusted), clipped to [0, 1] after averaging. Every run graded all 150 tasks with no agent errors. Agent cost reported by Claude Code: $1.40 original, $1.46 Harbor.",
     "original_parity_repo": "https://github.com/Mike-7777777/simple-evals/tree/harbor-parity",
     "adapter_pr": [
       "https://github.com/harbor-framework/adapters/pull/24"
@@ -18,10 +18,18 @@
       {
         "benchmark_name": "HealthBench Professional",
         "metric": "length-adjusted score",
-        "original": "<mean +/- sample_SEM, e.g. 45.2% +/- 1.3%>",
-        "harbor": "<mean +/- sample_SEM, e.g. 44.8% +/- 1.1%>",
-        "original_runs": [],
-        "harbor_runs": []
+        "original": "0.6165 ± 0.0171",
+        "harbor": "0.5989 ± 0.0040",
+        "original_runs": [
+          0.5974,
+          0.6506,
+          0.6014
+        ],
+        "harbor_runs": [
+          0.6058,
+          0.5987,
+          0.592
+        ]
       }
     ]
   }

@@ -22,10 +22,12 @@
         "parity_sampling_rate": 0.2857,
         "registry_benchmark_size": null,
         "added_agents": [],
-        "parity_matching_agents": [],
+        "parity_matching_agents": [
+          "claude-code@2.1.322+claude-haiku-5-5"
+        ],
         "parity_unmatching_agents": null,
-        "parity_costs": null,
-        "notes": "Oracle passes on all 525 tasks (Harbor 0.25.0). Parity runs on the 150-task stratified subset (--split parity) once keys are provided."
+        "parity_costs": "about $15",
+        "notes": "Oracle passes on all 525 tasks (Harbor 0.25.0). Parity on the 150-task stratified subset (--split parity), three runs per side, Harbor 0.26.0 with the separate verifier; the run ranges overlap. Parity cost: about $15, of which $2.90 is agent cost reported by Claude Code and the rest the gpt-5.4 judge (about $2 per run of 150 tasks), 10-task sanity runs included."
       }
     ]
   }

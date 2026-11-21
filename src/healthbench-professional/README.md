@@ -1,6 +1,6 @@
 # HealthBench Professional → Harbor Adapter
 
-**Status.** The oracle passes on all 525 tasks in Harbor 0.25.0. Parity runs are next; see [Comparison with Original Benchmark](#comparison-with-original-benchmark-parity).
+**Status.** The oracle passes on all 525 tasks in Harbor 0.25.0. Parity on the 150-task subset matches the original harness: 3 runs per side, and the run ranges overlap; see [Comparison with Original Benchmark](#comparison-with-original-benchmark-parity).
 
 ## Overview
 
@@ -77,7 +77,7 @@ Unit tests: `uv run pytest tests`.
 
 ## Comparison with Original Benchmark (Parity)
 
-Pending; runs start once the Harbor team provides keys. Plan reviewed in the adapter PR: Scenario 2, a claude-code sampler added to a fork of simple-evals ([Mike-7777777/simple-evals@harbor-parity](https://github.com/Mike-7777777/simple-evals/tree/harbor-parity)), `claude-code` 2.1.322 with Claude Haiku 5.5 on both sides, the same judge (`gpt-5.4-2026-03-05`, reasoning low), a 10-task sanity check on both sides, then 3 runs per side on the parity subset. Benchmark score on each side: the mean unclipped task score, clipped to [0, 1] after averaging.
+Scenario 2: a claude-code sampler added to a fork of simple-evals ([Mike-7777777/simple-evals@harbor-parity](https://github.com/Mike-7777777/simple-evals/tree/harbor-parity)), `claude-code` 2.1.322 with Claude Haiku 5.5 on both sides, the same judge (`gpt-5.4`, reasoning low; see [Judge snapshot](#notes--caveats)), a 10-task sanity check on both sides, then 3 runs per side on the parity subset. The Harbor side ran on Harbor 0.26.0 with the separate verifier. Run score on each side: the mean unclipped task score, clipped to [0, 1] after averaging.
 
 **Parity subset.** `--split parity` generates 150 tasks chosen by `select_parity_ids` in `adapter.py`. They are stratified by use case and type: each of the 6 strata gets seats in proportion to its size (largest remainder), and within a stratum records are taken in sha256(id) order. The dataset file is pinned by sha256, so the subset is fixed.
 
@@ -105,13 +105,16 @@ harbor run -c src/healthbench-professional/healthbench-professional_parity.yaml
 
 | Agent | Model | Metric | Number of Runs | Dataset Size | Original Benchmark Performance | Harbor Adapter Performance |
 |---|---|---|---|---|---|---|
-| claude-code | claude-haiku-5-5 | length-adjusted score | 3 | 150 (29% of 525) | pending | pending |
+| claude-code | claude-haiku-5-5 | length-adjusted score | 3 | 150 (29% of 525) | 0.6165 ± 0.0171 | 0.5989 ± 0.0040 |
 
-Checks so far:
+Mean ± sample SEM over runs. Run scores: original 0.5974, 0.6506, 0.6014; Harbor 0.6058, 0.5987, 0.5920. The run ranges overlap. Per task, averaged over the three runs, Harbor minus original is −0.018 on average (standard error 0.016, 150 tasks). Every run graded all 150 tasks with no agent errors. Agent cost reported by Claude Code: $1.40 original, $1.46 Harbor; the judge costs about $2 per run.
+
+Other checks:
 
 - Physician reference replies, all 525, graded with this grader's prompt and scoring (judge `gpt-5.4`, reasoning low): length-adjusted mean 0.429; the paper reports 0.437 (section 5.1).
 - Harbor 0.24.0, 3 tasks: every per-item verdict from `test.sh` matched a direct call to the simple-evals code.
 - Generated task directories contain no dataset text (unit test with sentinel records).
+- Every Harbor parity trial graded against its own task's rubric, and its agent read its own task's conversation (checked per trial).
 
 ## Notes & Caveats
 
@@ -119,7 +122,7 @@ Checks so far:
 
 **Oracle solutions.** Physician replies score 0.43 on average, so they cannot serve as the oracle. Oracle replies are written against each rubric with AI assistance, kept at or under 2000 characters so the length adjustment does not apply, and accepted only after three consecutive full-score gradings. In Harbor 0.25.0 all 525 reach reward 1.0. They are passed in with `--oracle-dir` and embedded in each generated `solution/solve.sh`, which the agent never sees; they are AI-written text, not dataset records. The 525 replies are not in this repository; they will be uploaded to parity-experiments with the parity results.
 
-**Judge snapshot.** Results are only comparable with the paper under `gpt-5.4-2026-03-05`. The local checks above used a third-party endpoint that reports the model as `gpt-5.4` without a snapshot.
+**Judge snapshot.** Results are only comparable with the paper under `gpt-5.4-2026-03-05`. The parity runs used an endpoint that serves `gpt-5.4` but not the dated name, and the local checks above a third-party endpoint that reports the model as `gpt-5.4` without a snapshot.
 
 ## Installation / Prerequisites
 
