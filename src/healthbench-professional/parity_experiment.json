@@ -13,7 +13,9 @@
       "https://github.com/harbor-framework/adapters/pull/24"
     ],
     "dataset_pr": [],
-    "parity_pr": [],
+    "parity_pr": [
+      "https://huggingface.co/datasets/mike-7777777/harbor-parity-experiments/tree/ff1ec151bfb9c092c660e826476bc47e1d30db44/adapters/healthbench-professional"
+    ],
     "metrics": [
       {
         "benchmark_name": "HealthBench Professional",

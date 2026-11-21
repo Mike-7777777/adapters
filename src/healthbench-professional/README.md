@@ -109,6 +109,8 @@ harbor run -c src/healthbench-professional/healthbench-professional_parity.yaml
 
 Mean ± sample SEM over runs. Run scores: original 0.5974, 0.6506, 0.6014; Harbor 0.6058, 0.5987, 0.5920. The run ranges overlap. Per task, averaged over the three runs, Harbor minus original is −0.018 on average (standard error 0.016, 150 tasks). Every run graded all 150 tasks. Claude Code exited normally in all 900 trials; in 1 original and 3 Harbor trials it ended without writing a reply, and the empty reply is graded as an empty string, as simple-evals does. Agent cost reported by Claude Code: $1.40 original, $1.46 Harbor; the judge costs about $2 per run.
 
+Results of every attempt, the oracle runs and the aggregation script are on Hugging Face: [mike-7777777/harbor-parity-experiments](https://huggingface.co/datasets/mike-7777777/harbor-parity-experiments/tree/ff1ec151bfb9c092c660e826476bc47e1d30db44/adapters/healthbench-professional), pinned, with a SHA256 manifest; the shared parity-experiments dataset is over Hugging Face's file limit ([#129](https://github.com/harbor-framework/adapters/issues/129)). Agent logs, replies and judge outputs contain conversation and rubric text, so they are encrypted with the dataset's canary string; `scripts/decrypt.py` there unpacks them.
+
 Other checks:
 
 - Physician reference replies, all 525, graded with this grader's prompt and scoring (judge `gpt-5.4`, reasoning low): length-adjusted mean 0.429; the paper reports 0.437 (section 5.1).
