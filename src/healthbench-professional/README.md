@@ -19,7 +19,7 @@ An LLM judge (`gpt-5.4-2026-03-05`, reasoning low) decides whether each rubric i
 ## Adapter Features
 
 - Pointer-only tasks. The dataset README asks that examples not be shown in plain text online, so a task holds only its record id and the dataset canary. `hbp_data.py` fetches the data from the pinned revision and checks its sha256; a mismatch stops the build or the grading.
-- Tamper-resistant grading. The verifier fetches the conversation and rubric with its own copy of `hbp_data.py`, so editing files under `/workspace` cannot change what is graded.
+- Separate verifier. Grading runs in its own container, built from `tests/Dockerfile` with the judge client preinstalled. Of the agent's files, Harbor copies in only the declared artifact `/workspace/response.txt` (plus its standard `/logs/artifacts/` directory), and the grader fetches the conversation and rubric with its own copy of `hbp_data.py`, so nothing else the agent does can change what is graded.
 - Grader parity. `tests/grader.py` reuses the simple-evals grader prompt verbatim and its scoring (MIT, attribution in the file header). Unparseable judge output is retried a bounded number of times; after that the verifier exits non-zero instead of recording a score.
 - Reward in [0, 1] plus the unclipped score, see [Notes & Caveats](#notes--caveats).
 
@@ -34,6 +34,7 @@ An LLM judge (`gpt-5.4-2026-03-05`, reasoning low) decides whether each rubric i
 │   └── hbp_data.py
 ├── solution/solve.sh         # oracle reply (when generated with --oracle-dir)
 └── tests/
+    ├── Dockerfile            # verifier image (separate from the agent's)
     ├── test.sh
     ├── grader.py             # fetches conversation and rubric itself
     ├── hbp_data.py

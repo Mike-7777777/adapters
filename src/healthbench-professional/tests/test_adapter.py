@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import sys
+import tomllib
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -118,6 +119,19 @@ def test_generated_task_holds_no_record_text(tmp_path, monkeypatch):
     ):
         assert sentinel not in blob
     assert "canary" in (tmp_path / "abc" / "instruction.md").read_text()
+
+
+def test_generated_task_grades_in_a_separate_verifier(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        adapter_module.hbp_data, "load_rows", lambda source=None: [fake_row("abc")]
+    )
+    adapter_module.HealthBenchProfessionalAdapter(tmp_path).run()
+    task = tmp_path / "abc"
+    config = tomllib.loads((task / "task.toml").read_text())
+    assert config["verifier"]["environment_mode"] == "separate"
+    # The reply is the only file the verifier needs from the agent's container.
+    assert config["artifacts"] == [str(grader.RESPONSE_PATH)]
+    assert (task / "tests" / "Dockerfile").is_file()
 
 
 def strata_rows(sizes: dict[tuple[str, str], int]) -> list[dict]:

@@ -1,4 +1,7 @@
 schema_version = "1.0"
+# The verifier runs in its own container (tests/Dockerfile); Harbor copies the
+# reply into it from the agent's container.
+artifacts = ["/workspace/response.txt"]
 
 [task]
 name = "openai/healthbench-professional__{task_id}"
@@ -10,6 +13,7 @@ difficulty = "{difficulty}"
 category = "medical"
 
 [verifier]
+environment_mode = "separate"
 timeout_sec = 900.0
 
 [verifier.env]
