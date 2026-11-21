@@ -143,6 +143,24 @@ def test_domain_and_hard_splits(tmp_path, fake_data, split, expected):
     assert sorted(p.name for p in out.iterdir()) == expected
 
 
+def test_verifier_runs_in_its_own_image_and_gets_the_reply_as_an_artifact(
+    tmp_path, fake_data
+):
+    task = generate(tmp_path) / "finance-f1"
+    toml = tomllib.loads((task / "task.toml").read_text())
+    assert toml["artifacts"] == ["/workspace/response.txt"]
+    assert toml["verifier"]["environment_mode"] == "separate"
+    verifier_image = (task / "tests" / "Dockerfile").read_text()
+    assert "openai==" in verifier_image and "COPY . /tests/" in verifier_image
+    # The agent image holds the conversation only: no judge client, no rubric.
+    agent_image = (task / "environment" / "Dockerfile").read_text()
+    assert "openai" not in agent_image
+    assert sorted(p.name for p in (task / "environment").iterdir()) == [
+        "Dockerfile",
+        "conversation.md",
+    ]
+
+
 def test_task_files_hold_the_conversation_rubric_and_canaries(tmp_path, fake_data):
     task = generate(tmp_path) / "finance-f1"
     conversation = (task / "environment" / "conversation.md").read_text()

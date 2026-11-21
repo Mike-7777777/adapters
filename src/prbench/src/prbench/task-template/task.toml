@@ -1,4 +1,6 @@
 schema_version = "1.0"
+# The reply is the only file handed from the agent to the verifier.
+artifacts = ["/workspace/response.txt"]
 
 [task]
 name = "scaleai/{adapter_name}__{task_id}"
@@ -39,6 +41,8 @@ turns = {turns}
 hard_subset = {hard}
 
 [verifier]
+# Grading runs in its own container, built from tests/Dockerfile.
+environment_mode = "separate"
 timeout_sec = 1800.0
 
 [verifier.env]
