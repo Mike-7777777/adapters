@@ -238,8 +238,11 @@ class AiderPolyglotAdapter:
         """
         Copy what the config declares for solutions + invalidators.
         """
-        # 1) Copy solutions exactly as listed
-        for rel in task.solution_files:
+        # 1) Copy solutions exactly as listed, and the editor files: Exercism
+        #    gives them to the solver as read-only helpers the solution builds
+        #    on. Go's cases_test.go holds the test cases, so it stays in tests/.
+        helpers = [rel for rel in task.editor_files if not rel.endswith("_test.go")]
+        for rel in [*task.solution_files, *helpers]:
             copy_relative(task.exercise_path, rel, workspace_dir)
 
         # 2) Copy any "invalidator" files (e.g., Java build.gradle)
@@ -510,12 +513,22 @@ class AiderPolyglotAdapter:
             )
             return rust_lib or Path("src/lib.rs")
 
+        # The editor files in the workspace are never where the example goes.
+        editor = {Path(e) for e in task.editor_files}
+
+        def candidates(pattern: str) -> list[Path]:
+            return [
+                p
+                for p in workspace_dir.rglob(pattern)
+                if p.is_file() and p.relative_to(workspace_dir) not in editor
+            ]
+
         ext = "".join(src_abs.suffixes)
-        ext_matches = [p for p in workspace_dir.rglob(f"*{ext}") if p.is_file()]
+        ext_matches = candidates(f"*{ext}")
         if len(ext_matches) == 1:
             return ext_matches[0].relative_to(workspace_dir)
 
-        name_matches = [p for p in workspace_dir.rglob(src_name) if p.is_file()]
+        name_matches = candidates(src_name)
         if name_matches:
             name_matches.sort(
                 key=lambda p: (0 if "src" in p.parts else 1, len(p.as_posix()))
