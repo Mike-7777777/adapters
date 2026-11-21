@@ -23,7 +23,7 @@ Scores are computed per subset: accuracy for the five best-of-4 subsets and a co
 ## Adapter Features
 
 - Official judge prompt. A best-of-4 task carries the harness's four-way prompt verbatim, and the correct response sits at the position the harness draws for that row with its default seed 0. A check against the upstream functions found all 1,763 instructions and answer letters identical.
-- Deterministic verification. `tests/grade.py` uses the harness's verdict parser and reward mapping and runs on the Python standard library alone. The scorer accepts a trial's `grading.json` only when its reward equals the one Harbor recorded.
+- Deterministic verification in a separate container. `tests/grade.py` uses the harness's verdict parser and reward mapping and runs on the Python standard library alone. It runs in Harbor's [separate verifier](https://www.harborframework.com/docs/tasks/separate-verifier), which receives only the agent's output file. The scorer accepts a trial's `grading.json` only when its reward equals the one Harbor recorded.
 - Official aggregation. `reward-bench-2-score` reads a Harbor job directory and prints the six subset scores and their mean, using a port of the harness's Ties scoring that matches the upstream function on 2,000 random inputs and on a published run.
 - Pinned data. The parquet file is fetched from a fixed commit of the dataset; the answer positions are checked against a pinned digest of the official seed-0 positions.
 - Parity subset. `--split parity` generates 302 tasks: all Ties tasks and 40 tasks per best-of-4 subset.
@@ -46,6 +46,8 @@ reward-bench-2/
 ```
 
 A best-of-4 task asks for a judgment ending in a verdict such as `[[B]]`, saved to `/workspace/judgment.txt`. A Ties task asks for a 1-10 rating of every response, saved to `/workspace/ratings.json`.
+
+The verifier runs in its own container (`environment_mode = "separate"` in `task.toml`), a fresh copy of the task image with `tests/` uploaded. The output file is listed under `artifacts`, which is how Harbor copies it from the agent's container.
 
 Task ids are `<subset>-<row id>`. Row ids repeat across subsets in the source data, so the subset is part of the id.
 
@@ -131,7 +133,7 @@ uv run --project src/reward-bench-2 reward-bench-2-score jobs/<job_name>
 
 Checks so far:
 
-- Oracle, Harbor 0.25.0, all 1,865 tasks: reward 1.0 on every task.
+- Oracle, Harbor 0.26.0 with the separate verifier, all 1,865 tasks: reward 1.0 on every task.
 - No-op agent, all 1,865 tasks: reward 0.0 on every task.
 - Wrong answers on the 302 parity tasks (the next letter for best-of-4, equal ratings for Ties): reward 0.0 on every task.
 - Prompt and answer key: for all 1,763 best-of-4 tasks, `instruction.md` equals the output of the harness's `format_judge_answers` on the harness's seed-0 answer order plus the closing line that names the output file, and the answer letter equals the harness's `winner_text`.
@@ -157,7 +159,7 @@ Checks so far:
 
 ## Installation / Prerequisites
 
-- Docker, and Harbor 0.25 or later.
+- Docker, and Harbor 0.26 or later.
 - `uv` for generating tasks and running the scorer; Python 3.13 is fetched by `uv` if needed.
 - Network access to Hugging Face when generating tasks (about 7 MB; `HF_ENDPOINT` selects a mirror). Running tasks needs no network beyond what the agent itself uses.
 - API keys for the chosen agent.
