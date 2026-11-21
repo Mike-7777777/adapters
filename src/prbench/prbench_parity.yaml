@@ -21,5 +21,7 @@ environment:
 agents:
   - name: claude-code
     model_name: anthropic/claude-haiku-5-5
+    kwargs:
+      version: "2.1.322"  # the same Claude Code build on the original-benchmark side
 datasets:
   - path: datasets/prbench-parity

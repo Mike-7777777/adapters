@@ -19,7 +19,7 @@ An LLM judge (`o4-mini` in the paper) decides whether each criterion is met. Tas
 - Upstream-faithful grading. `tests/grader.py` reuses the PRBench grader prompt verbatim, renders the conversation the same way, sends one judge call per criterion through the Responses API with no sampling parameters, parses verdicts with the upstream rule and computes both upstream scores. Checked against the upstream functions on all 1,100 records.
 - Three numbers per task in `reward.json`: `reward`, `score` and `score_normalized` (see Reward range under Notes & Caveats).
 - Multi-turn conversations and reference texts. Earlier turns, including the model replies stored in the dataset, are given to the agent in `/workspace/conversation.md`; reference texts are placed in front of the prompt of their turn.
-- The verifier grades from its own copy of the conversation and rubric (`tests/task.json`), so editing files under `/workspace` cannot change what is graded. The rubric is never placed where the agent can read it.
+- Separate verifier. Grading runs in its own container, built from `tests/Dockerfile`, which holds the grader, the judge client and the verifier's copy of the conversation and rubric (`tests/task.json`). The agent's container holds only the conversation, and the reply (`/workspace/response.txt`) is the only file passed to the verifier, as an artifact.
 - Pinned data: each parquet file is sha256-checked against the pinned revision before tasks are built.
 - Dataset canaries are kept: every task carries the `prbench:sample:...` canary strings of its record.
 
@@ -27,13 +27,14 @@ An LLM judge (`o4-mini` in the paper) decides whether each criterion is met. Tas
 
 ```
 <domain>-<task>/                  # e.g. finance-ea67e314b6c2e8fc70627c19
-├── task.toml                     # name scaleai/prbench__<domain>-<task>
+├── task.toml                     # name scaleai/prbench__<domain>-<task>; separate verifier, reply as artifact
 ├── instruction.md                # asks for the next reply; holds the canaries
 ├── environment/
-│   ├── Dockerfile                # copies conversation.md to /workspace
+│   ├── Dockerfile                # agent image: conversation.md in /workspace
 │   └── conversation.md
 ├── solution/solve.sh             # oracle reply (see Notes & Caveats)
 └── tests/
+    ├── Dockerfile                # verifier image: grader, judge client, task.json
     ├── test.sh
     ├── grader.py
     └── task.json                 # conversation, rubric with weights, canaries
@@ -100,13 +101,14 @@ harbor run -c src/prbench/prbench_parity.yaml
 |---|---|---|---|---|---|---|
 | pending | pending | mean_clipped | 3 | 200 (18% of 1,100) | pending | pending |
 
-Checks so far, none of which call a model:
+Checks so far; only the last one calls a model:
 
-- Harbor 0.25.0, all 1,100 tasks, oracle agent with `ORACLE_MODE=true`: 1,100 trials, 0 exceptions, reward 1.0 on every task.
-- Harbor 0.25.0, all 1,100 tasks, `nop` agent: 1,100 trials, 0 exceptions, reward 0 and `score` 0 on every task.
+- Harbor 0.26.0, all 1,100 tasks, oracle agent with `ORACLE_MODE=true`: 1,100 trials, 0 exceptions, reward 1.0 on every task.
+- Harbor 0.26.0, all 1,100 tasks, `nop` agent: 1,100 trials, 0 exceptions, reward 0 and `score` 0 on every task.
 - The ported functions (conversation building, rubric weights, judge prompt, verdict parsing, both scores) agree with the upstream code on all 1,100 records.
 - Unmodified upstream `evals.py` (`final_response_source: prefilled`) and this grader, given the same replies and a deterministic local stand-in for the judge endpoint, produce identical task scores on all 1,100 tasks, and the 18,692 judge prompts are byte-identical on the two sides (with `--reference-texts omit`, the upstream behavior).
 - Harbor 0.25.0, 7 tasks, with the stand-in judge: the default oracle outline reaches reward 1.0 through the judge path, and replies that quote only negative criteria get the expected negative `score` and reward 0.
+- Harbor 0.26.0, one task (`finance-70666a55b21ddb48de74e555`: 13 positive and 3 negative criteria), judged by `gpt-5.6-terra`: the default oracle outline meets all 13 positive criteria and none of the negative ones (reward 1.0); an off-topic reply meets none of the 16 (reward 0).
 
 ## Notes & Caveats
 
@@ -126,7 +128,7 @@ Checks so far, none of which call a model:
 
 ## Installation / Prerequisites
 
-- Docker, and Harbor 0.25 or later (Harbor 0.25 clears `reward.json` before each verification).
+- Docker, and a Harbor release with separate verifier environments (checked on Harbor 0.26.0).
 - Network access when generating tasks (Hugging Face), when building images (PyPI for the `openai` package) and at verification time (the judge endpoint).
 - An API key for the judge model, for agent runs.
 
