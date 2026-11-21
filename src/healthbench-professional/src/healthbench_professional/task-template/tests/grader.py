@@ -26,7 +26,7 @@ import sys
 import time
 from pathlib import Path
 
-from hbp_data import load_record
+from hbp_data import load_record, record_id
 
 RESPONSE_PATH = Path("/workspace/response.txt")
 TESTS = Path(__file__).resolve().parent
@@ -112,7 +112,7 @@ def main() -> int:
     client = OpenAI(base_url=os.environ.get("OPENAI_BASE_URL") or None)
     model = os.environ.get("GRADER_MODEL", "gpt-5.4-2026-03-05")
 
-    record = load_record((TESTS / "task_id").read_text().strip())
+    record = load_record(record_id(TESTS))
     messages = record["conversation"]["messages"]
     rubric = [
         {"criterion": it["criterion_text"], "points": it["points"]}

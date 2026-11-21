@@ -116,9 +116,8 @@ class HealthBenchProfessionalAdapter:
             "specialty": row["specialty"],
             "difficulty": "hard" if row["difficulty"] == "difficult" else "medium",
         }
-        for name in ("task.toml", "environment/Dockerfile"):
-            path = task_dir / name
-            path.write_text(fill(path.read_text(), values))
+        toml = task_dir / "task.toml"
+        toml.write_text(fill(toml.read_text(), values))
         instruction = task_dir / "instruction.md"
         instruction.write_text(
             instruction.read_text() + f"\n<!-- canary: {row['canary_string']} -->\n"
@@ -127,6 +126,10 @@ class HealthBenchProfessionalAdapter:
         solve.write_text(
             fill(solve.read_text(), {"body": self._oracle_body(row["id"])})
         )
+        # Both build contexts are the same for every task except for the name of
+        # the record file (see hbp_data.record_id).
         for sub in ("environment", "tests"):
             shutil.copy2(DATA_MODULE, task_dir / sub / "hbp_data.py")
-        (task_dir / "tests" / "task_id").write_text(row["id"] + "\n")
+            (task_dir / sub / f"{hbp_data.RECORD_PREFIX}{row['id']}").write_text(
+                row["id"] + "\n"
+            )

@@ -31,17 +31,20 @@ An LLM judge (`gpt-5.4-2026-03-05`, reasoning low) decides whether each rubric i
 ├── instruction.md            # asks the agent to read /workspace/conversation.md
 ├── environment/
 │   ├── Dockerfile            # writes /workspace/conversation.md at build time
-│   └── hbp_data.py
+│   ├── hbp_data.py
+│   └── record-<task_id>
 ├── solution/solve.sh         # oracle reply (when generated with --oracle-dir)
 └── tests/
     ├── Dockerfile            # verifier image (separate from the agent's)
     ├── test.sh
     ├── grader.py             # fetches conversation and rubric itself
     ├── hbp_data.py
-    └── task_id
+    └── record-<task_id>
 ```
 
 The agent writes its reply to `/workspace/response.txt`.
+
+The record id is the name of the `record-<task_id>` file, so the two build contexts are identical across tasks except for that name. An image build can reuse its previous copy of a file with the same name, size and modification time, which fixed-size per-task contents written in the same clock tick would share.
 
 ## Run Evaluation / Harness in Harbor
 

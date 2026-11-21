@@ -45,9 +45,11 @@ def judge(log_dir, tmp_path, monkeypatch):
             {"criterion_text": "bad", "points": -2},
         ],
     }
-    (tmp_path / "task_id").write_text("abc\n")
+    (tmp_path / "record-abc").write_text("abc\n")
     monkeypatch.setattr(grader, "TESTS", tmp_path)
-    monkeypatch.setattr(grader, "load_record", lambda task_id: record)
+    monkeypatch.setattr(
+        grader, "load_record", lambda task_id: record if task_id == "abc" else None
+    )
     calls = []
 
     def install(*outputs):
@@ -132,6 +134,40 @@ def test_generated_task_grades_in_a_separate_verifier(tmp_path, monkeypatch):
     # The reply is the only file the verifier needs from the agent's container.
     assert config["artifacts"] == [str(grader.RESPONSE_PATH)]
     assert (task / "tests" / "Dockerfile").is_file()
+
+
+def test_build_contexts_differ_between_tasks_only_in_a_file_name(tmp_path, monkeypatch):
+    # The image build can reuse its previous copy of a file with the same name,
+    # size and modification time, so a same-size per-task file (an id written
+    # in the same clock tick) can reach the image stale. Only the record file's
+    # name may differ between tasks.
+    monkeypatch.setattr(
+        adapter_module.hbp_data,
+        "load_rows",
+        lambda source=None: [fake_row("a" * 32), fake_row("b" * 32)],
+    )
+    adapter_module.HealthBenchProfessionalAdapter(tmp_path).run()
+    for sub in ("environment", "tests"):
+        contexts = []
+        for task_id in ("a" * 32, "b" * 32):
+            ctx = tmp_path / task_id / sub
+            assert sorted(p.name for p in ctx.glob("record-*")) == [f"record-{task_id}"]
+            contexts.append(
+                {
+                    p.relative_to(ctx).as_posix(): p.read_bytes()
+                    for p in ctx.rglob("*")
+                    if p.is_file() and not p.name.startswith("record-")
+                }
+            )
+        assert contexts[0] == contexts[1], sub
+
+
+@pytest.mark.parametrize("names", [[], ["record-a", "record-b"]])
+def test_record_id_needs_exactly_one_record_file(tmp_path, names):
+    for name in names:
+        (tmp_path / name).touch()
+    with pytest.raises(SystemExit, match="record-"):
+        adapter_module.hbp_data.record_id(tmp_path)
 
 
 def strata_rows(sizes: dict[tuple[str, str], int]) -> list[dict]:
