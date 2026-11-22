@@ -6,12 +6,14 @@
     ],
     "original_benchmark": [
       {
-        "split": "test",
+        "split": "full",
         "size": 525,
         "harness": "llm",
-        "supported_agents": null,
+        "supported_agents": [
+          "None"
+        ],
         "adaptable": true,
-        "notes": "HealthBench Professional (OpenAI, arXiv 2604.27470): 525 real clinician conversations graded against physician-written rubric items by an LLM judge (gpt-5.4-2026-03-05, reasoning low)."
+        "notes": "HealthBench Professional (OpenAI, arXiv 2604.27470): 525 real clinician conversations graded against physician-written rubric items by an LLM judge (gpt-5.4-2026-03-05, reasoning low). Original evaluation: simple-evals healthbench_eval.py (652c89d), which the dataset README calls the unofficial external implementation; the original calls a model API directly, with no agent."
       }
     ],
     "harbor_adapter": [
@@ -20,14 +22,18 @@
         "adapted_benchmark_size": 525,
         "parity_benchmark_size": 150,
         "parity_sampling_rate": 0.2857,
-        "registry_benchmark_size": null,
-        "added_agents": [],
+        "registry_benchmark_size": 525,
+        "added_agents": [
+          "None"
+        ],
         "parity_matching_agents": [
           "claude-code@2.1.322+claude-haiku-5-5"
         ],
-        "parity_unmatching_agents": null,
-        "parity_costs": "about $15",
-        "notes": "Oracle reaches reward 1.0 on all 525 tasks: Harbor 0.25.0; Harbor 0.26.0 with the separate verifier, 523 on the first attempt and the other two in each of three more attempts. Parity on the 150-task stratified subset (--split parity), three runs per side, Harbor 0.26.0 with the separate verifier; the run ranges overlap. Parity cost: about $15, of which $2.90 is agent cost reported by Claude Code and the rest the gpt-5.4 judge (about $2 per run of 150 tasks), 10-task sanity runs included."
+        "parity_unmatching_agents": [
+          "None"
+        ],
+        "parity_costs": "$24",
+        "notes": "Oracle: Harbor 0.26.0 with the separate verifier, 523 of 525 tasks reach reward 1.0 on the first attempt; in the other two the judge marked a negative rubric item as met, and the same replies reach 1.0 in each of three more attempts (Harbor 0.25.0, earlier layout: 525 of 525). Parity on the 150-task stratified subset (--split parity), three runs per side, Harbor 0.26.0; the run ranges overlap. Parity cost about $24, all nine 150-task runs (a discarded first Harbor batch included) and both 10-task checks: $4.34 agent cost reported by Claude Code, the rest the gpt-5.4 judge (about $2 to $2.50 per 150-task run). Registry: openai/healthbench-professional (525 tasks) and openai/healthbench-professional-parity (the 150-task subset), tag v1.0 requested for both."
       }
     ]
   }

@@ -22,6 +22,18 @@ PACKAGE_DIR = Path(__file__).resolve().parent
 TEMPLATE_DIR = PACKAGE_DIR / "task-template"
 DATA_MODULE = PACKAGE_DIR / "hbp_data.py"
 NO_ORACLE = 'echo "no oracle reply was generated for this task" >&2\nexit 1'
+# Oracle replies are written against the rubric, so solve.sh carries them
+# encrypted with the dataset's canary string, as BrowseComp ships its answers:
+# XOR with the repeated SHA-256 of the canary, then base64. The encrypted
+# parity uploads use the same XOR.
+ORACLE_DECRYPT = """mkdir -p /workspace
+python3 - <<'EOF'
+import base64, hashlib
+data = base64.b64decode("{ciphertext}")
+key = hashlib.sha256({canary}.encode()).digest()
+reply = bytes(b ^ key[i % len(key)] for i, b in enumerate(data))
+open("/workspace/response.txt", "wb").write(reply)
+EOF"""
 SPLITS = ("full", "parity")
 PARITY_SIZE = 150
 
@@ -48,6 +60,14 @@ def select_parity_ids(rows: list[dict], size: int = PARITY_SIZE) -> list[str]:
         ranked = sorted(strata[k], key=lambda i: hashlib.sha256(i.encode()).hexdigest())
         chosen += ranked[: seats[k]]
     return sorted(chosen)
+
+
+def encrypt(plain: bytes, canary: str) -> str:
+    """XOR with the repeated SHA-256 of the canary, then base64; XOR undoes it."""
+    key = hashlib.sha256(canary.encode()).digest()
+    return base64.b64encode(
+        bytes(b ^ key[i % len(key)] for i, b in enumerate(plain))
+    ).decode()
 
 
 def fill(template: str, values: dict[str, str]) -> str:
@@ -90,12 +110,14 @@ class HealthBenchProfessionalAdapter:
         for row in rows:
             self._write_task(row)
 
-    def _oracle_body(self, task_id: str) -> str:
+    def _oracle_body(self, task_id: str, canary: str) -> str:
         reply = self.oracle_dir / f"{task_id}.txt" if self.oracle_dir else None
         if not reply or not reply.is_file():
             return NO_ORACLE
-        encoded = base64.b64encode(reply.read_bytes()).decode()
-        return f"mkdir -p /workspace\necho '{encoded}' | base64 -d > /workspace/response.txt"
+        return fill(
+            ORACLE_DECRYPT,
+            {"canary": repr(canary), "ciphertext": encrypt(reply.read_bytes(), canary)},
+        )
 
     def _write_task(self, row: dict) -> None:
         task_dir = self.output_dir / row["id"]
@@ -124,7 +146,10 @@ class HealthBenchProfessionalAdapter:
         )
         solve = task_dir / "solution" / "solve.sh"
         solve.write_text(
-            fill(solve.read_text(), {"body": self._oracle_body(row["id"])})
+            fill(
+                solve.read_text(),
+                {"body": self._oracle_body(row["id"], row["canary_string"])},
+            )
         )
         # Both build contexts are the same for every task except for the name of
         # the record file (see hbp_data.record_id).

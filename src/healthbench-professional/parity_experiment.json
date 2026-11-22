@@ -7,8 +7,8 @@
     "adapted_benchmark_size": 525,
     "parity_benchmark_size": 150,
     "number_of_runs": 3,
-    "notes": "150-task subset stratified by use case and type (--split parity). Claude Code 2.1.322 with claude-haiku-5-5 on both sides, three runs per side after a 10-task sanity check; Harbor 0.26.0 with the separate verifier. Judge gpt-5.4, reasoning low, on both sides (the parity endpoint does not serve the dated name gpt-5.4-2026-03-05 that simple-evals uses). Run score: the mean unclipped task score (length-adjusted), clipped to [0, 1] after averaging. Every run graded all 150 tasks. Claude Code exited normally in all 900 trials; in 1 original and 3 Harbor trials it ended without writing a reply, which is graded as an empty string, as simple-evals does. Agent cost reported by Claude Code: $1.40 original, $1.46 Harbor.",
-    "original_parity_repo": "https://github.com/Mike-7777777/simple-evals/tree/harbor-parity",
+    "notes": "150-task subset stratified by use case and type (--split parity). Original side: fork of simple-evals 652c89d at 6503101, run_hbp_parity.sh with 8 threads, Python 3.12, openai 3.48.0, CLAUDE_CODE_VERSION=2.1.322, GRADER_MODEL=gpt-5.4. Harbor side: Harbor 0.26.0 with the separate verifier, healthbench-professional_parity.yaml (8 concurrent trials), GRADER_MODEL=gpt-5.4. Claude Code 2.1.322 with claude-haiku-5-5 on both sides; judge gpt-5.4, reasoning low, on both sides through Harbor's parity API, which serves gpt-5.4 but not the dated name gpt-5.4-2026-03-05. Run score: the mean unclipped task score (length-adjusted), clipped to [0, 1] after averaging. Both sides started their three runs together; the original side finished first, and the first Harbor batch (0.5879, 0.6233, 0.5902) was discarded because image builds reused another task's record file in 7 trials (harbor#3827), then rerun after the fix (6fa4b4e). Every run graded all 150 tasks. Claude Code exited normally in all 900 reported trials; in 1 original and 3 Harbor trials it ended without writing a reply, which is graded as an empty string, as simple-evals does. Agent cost reported by Claude Code, summed over three runs: $1.40 original, $1.46 Harbor.",
+    "original_parity_repo": "https://github.com/Mike-7777777/simple-evals/tree/6503101e1b669f7040f27ddd4d063090ad7765e5",
     "adapter_pr": [
       "https://github.com/harbor-framework/adapters/pull/24"
     ],
@@ -21,7 +21,7 @@
         "benchmark_name": "HealthBench Professional",
         "metric": "length-adjusted score",
         "original": "0.6165 ± 0.0171",
-        "harbor": "0.5989 ± 0.0040",
+        "harbor": "0.5988 ± 0.0040",
         "original_runs": [
           0.5974,
           0.6506,

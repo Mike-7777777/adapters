@@ -1,14 +1,16 @@
-# Parity runs: claude-code with Claude Haiku 5.5 on the 150-task subset.
+# Parity runs: claude-code 2.1.322 with Claude Haiku 5.5 on the 150-task subset.
 # From the repository root, after generating the subset (see the README):
 #   harbor run -c src/healthbench-professional/healthbench-professional_parity.yaml
-# The judge (gpt-5.4-2026-03-05, reasoning low) comes from task.toml and reads
-# OPENAI_API_KEY / OPENAI_BASE_URL from the host environment.
+# The verifier reads OPENAI_API_KEY, OPENAI_BASE_URL and GRADER_MODEL from the
+# host environment (task.toml). The parity runs set GRADER_MODEL=gpt-5.4
+# (reasoning low), because the parity API serves gpt-5.4 but not the dated
+# name gpt-5.4-2026-03-05 that task.toml defaults to.
 jobs_dir: jobs
 n_attempts: 1
 timeout_multiplier: 1.0
 orchestrator:
   type: local
-  n_concurrent_trials: 4
+  n_concurrent_trials: 8
   quiet: false
 environment:
   type: docker
@@ -24,3 +26,10 @@ agents:
       version: "2.1.322"  # same Claude Code build as the simple-evals side
 datasets:
   - path: datasets/healthbench-professional-parity
+# Benchmark score: mean unclipped score, clipped to [0, 1] (metric.py needs uv);
+# "mean" keeps Harbor's per-key means of reward and score.
+metrics:
+  - type: uv-script
+    kwargs:
+      script_path: src/healthbench-professional/src/healthbench_professional/metric.py
+  - type: mean

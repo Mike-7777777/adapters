@@ -104,8 +104,12 @@ def write_reward(value: float, details: dict) -> None:
 
 def main() -> int:
     # A missing or empty reply is graded as "", as simple-evals grades whatever
-    # its sampler returns.
-    response = RESPONSE_PATH.read_text() if RESPONSE_PATH.is_file() else ""
+    # its sampler returns; bytes that are not UTF-8 become U+FFFD.
+    response = (
+        RESPONSE_PATH.read_text(encoding="utf-8", errors="replace")
+        if RESPONSE_PATH.is_file()
+        else ""
+    )
 
     from openai import OpenAI
 

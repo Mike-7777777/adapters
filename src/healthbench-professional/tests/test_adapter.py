@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import base64
 import json
+import subprocess
 import sys
 import tomllib
 from pathlib import Path
@@ -81,6 +83,15 @@ def test_empty_response_is_judged_as_simple_evals_does(log_dir, judge):
     )
 
 
+def test_reply_that_is_not_utf8_is_still_graded(log_dir, judge):
+    (log_dir.parent / "response.txt").write_bytes(b"ok \xff\xfe" + b"x" * 1995)
+    calls = judge('{"criteria_met": true}')
+    assert grader.main() == 0
+    assert "ok \ufffd\ufffd" in calls[0]["input"][0]["content"]
+    details = json.loads((log_dir / "grading.json").read_text())
+    assert details["response_chars"] == 2000
+
+
 @pytest.mark.parametrize("bad", ['{"criteria_met": 1}', "[]", "null", "not json"])
 def test_verdicts_that_are_not_booleans_are_retried(log_dir, judge, bad):
     (log_dir.parent / "response.txt").write_text("x" * 2000)
@@ -121,6 +132,45 @@ def test_generated_task_holds_no_record_text(tmp_path, monkeypatch):
     ):
         assert sentinel not in blob
     assert "canary" in (tmp_path / "abc" / "instruction.md").read_text()
+
+
+def run_solve(task: Path, workspace: Path) -> subprocess.CompletedProcess:
+    script = (task / "solution" / "solve.sh").read_text()
+    return subprocess.run(
+        ["bash", "-c", script.replace("/workspace", str(workspace))],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+
+def test_oracle_reply_is_encrypted_and_solve_sh_restores_it(tmp_path, monkeypatch):
+    reply = 'ORACLE-TEXT-SENTINEL: it\'s "quoted" ünïcode\n$HOME `x`\n'.encode()
+    oracle = tmp_path / "oracle"
+    oracle.mkdir()
+    (oracle / "abc.txt").write_bytes(reply)
+    row = fake_row("abc") | {"canary_string": "test canary 'quoted' GUID"}
+    monkeypatch.setattr(adapter_module.hbp_data, "load_rows", lambda source=None: [row])
+    adapter_module.HealthBenchProfessionalAdapter(
+        tmp_path / "out", oracle_dir=oracle
+    ).run()
+    task = tmp_path / "out" / "abc"
+    blob = "\n".join(f.read_text() for f in task.rglob("*") if f.is_file())
+    assert "ORACLE-TEXT-SENTINEL" not in blob
+    assert base64.b64encode(reply).decode() not in blob
+    done = run_solve(task, tmp_path / "ws")
+    assert done.returncode == 0, done.stderr
+    assert (tmp_path / "ws" / "response.txt").read_bytes() == reply
+
+
+def test_solve_sh_without_an_oracle_reply_fails(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        adapter_module.hbp_data, "load_rows", lambda source=None: [fake_row("abc")]
+    )
+    adapter_module.HealthBenchProfessionalAdapter(tmp_path / "out").run()
+    done = run_solve(tmp_path / "out" / "abc", tmp_path / "ws")
+    assert done.returncode == 1
+    assert "no oracle reply" in done.stderr
 
 
 def test_generated_task_grades_in_a_separate_verifier(tmp_path, monkeypatch):
@@ -219,3 +269,34 @@ def test_parity_split_generates_only_the_selected_tasks(tmp_path, monkeypatch):
 def test_adapter_rejects_an_unknown_split(tmp_path):
     with pytest.raises(ValueError, match="split"):
         adapter_module.HealthBenchProfessionalAdapter(tmp_path, split="lite")
+
+
+@pytest.mark.parametrize(
+    ("second", "healthbench_score"),
+    [({"reward": 0.0, "score": -0.3}, 0.36), ({"reward": 1.0, "score": 1.4}, 1.0)],
+)
+def test_dataset_metric_clips_the_mean_score(tmp_path, second, healthbench_score):
+    # Harbor's uv-script metric contract: -i rewards.jsonl (one reward.json per
+    # line, null for a trial without one), -o metric.json.
+    rewards = [{"reward": 1.0, "score": 1.02}, second, None]
+    (tmp_path / "in.jsonl").write_text("".join(json.dumps(r) + "\n" for r in rewards))
+    subprocess.run(
+        [
+            sys.executable,
+            str(PKG / "metric.py"),
+            "-i",
+            str(tmp_path / "in.jsonl"),
+            "-o",
+            str(tmp_path / "out.json"),
+        ],
+        check=True,
+    )
+    assert json.loads((tmp_path / "out.json").read_text()) == pytest.approx(
+        {
+            "trials": 2,
+            "trials_without_reward": 1,
+            "healthbench_score": healthbench_score,
+            "score_mean": (1.02 + second["score"]) / 2,
+            "reward_mean": (1.0 + second["reward"]) / 2,
+        }
+    )

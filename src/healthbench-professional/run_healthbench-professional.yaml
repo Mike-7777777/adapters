@@ -17,6 +17,13 @@ environment:
 agents:
   - name: oracle
   # - name: claude-code
-  #   model_name: anthropic/claude-haiku-4-5
+  #   model_name: anthropic/claude-haiku-5-5
 datasets:
   - path: datasets/healthbench-professional
+# Benchmark score: mean unclipped score, clipped to [0, 1] (metric.py needs uv);
+# "mean" keeps Harbor's per-key means of reward and score.
+metrics:
+  - type: uv-script
+    kwargs:
+      script_path: src/healthbench-professional/src/healthbench_professional/metric.py
+  - type: mean
