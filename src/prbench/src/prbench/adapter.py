@@ -180,14 +180,11 @@ class PRBenchAdapter:
             f"-> {self.output_dir}"
         )
 
-    def _oracle_body(self, task_id: str, rubric: list[dict]) -> str:
+    def _oracle_reply(self, task_id: str, rubric: list[dict]) -> bytes:
         written = self.oracle_dir / f"{task_id}.txt" if self.oracle_dir else None
         if written and written.is_file():
-            reply = written.read_bytes()
-        else:
-            reply = rubric_outline(rubric).encode()
-        encoded = base64.b64encode(reply).decode()
-        return f"mkdir -p /workspace\necho '{encoded}' | base64 -d > /workspace/response.txt"
+            return written.read_bytes()
+        return rubric_outline(rubric).encode()
 
     def _write_task(self, task: dict) -> bool:
         """Write one task directory; False when it exists and is left as is."""
@@ -220,7 +217,8 @@ class PRBenchAdapter:
             "domain": task["domain"],
             "topic": json.dumps(row["topic"]),
             "keywords": json.dumps(keywords),
-            "difficulty": "hard" if task["hard"] else "medium",
+            # PRBench defines a hard subset and no other difficulty levels.
+            "difficulty": "hard" if task["hard"] else "unknown",
             "hard": "true" if task["hard"] else "false",
             "turns": str(sum(m["role"] == "user" for m in messages)),
         }
@@ -233,10 +231,11 @@ class PRBenchAdapter:
             render_conversation(messages) + "\n"
         )
         rubric = dataset.rubric_items(row)
+        reply = self._oracle_reply(task["id"], rubric)
+        encoded = base64.b64encode(reply).decode()
+        body = f"mkdir -p /workspace\necho '{encoded}' | base64 -d > /workspace/response.txt"
         solve = task_dir / "solution" / "solve.sh"
-        solve.write_text(
-            fill(solve.read_text(), {"body": self._oracle_body(task["id"], rubric)})
-        )
+        solve.write_text(fill(solve.read_text(), {"body": body}))
         record = {
             "task_id": task["id"],
             "source_id": row["task"],
@@ -244,6 +243,8 @@ class PRBenchAdapter:
             "canaries": task["canaries"],
             "messages": messages,
             "rubric": rubric,
+            # ORACLE_MODE gives reward 1.0 only to this reply (tests/grader.py).
+            "oracle_sha256": hashlib.sha256(reply).hexdigest(),
         }
         (task_dir / "tests" / "task.json").write_text(
             json.dumps(record, indent=2, ensure_ascii=False) + "\n"

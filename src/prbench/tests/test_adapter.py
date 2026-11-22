@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import shutil
 import subprocess
@@ -126,8 +127,9 @@ def test_full_split_writes_every_task_with_registry_names(tmp_path, fake_data):
         "hard_subset": True,
     }
     assert "hard" in toml["task"]["keywords"]
-    easy = tomllib.loads((out / "finance-f2" / "task.toml").read_text())
-    assert easy["metadata"]["difficulty"] == "medium"
+    # PRBench defines only the hard subset; other records get Harbor's "unknown".
+    other = tomllib.loads((out / "finance-f2" / "task.toml").read_text())
+    assert other["metadata"]["difficulty"] == "unknown"
 
 
 @pytest.mark.parametrize(
@@ -150,6 +152,8 @@ def test_verifier_runs_in_its_own_image_and_gets_the_reply_as_an_artifact(
     toml = tomllib.loads((task / "task.toml").read_text())
     assert toml["artifacts"] == ["/workspace/response.txt"]
     assert toml["verifier"]["environment_mode"] == "separate"
+    # The default judge is the one the parity runs used.
+    assert toml["verifier"]["env"]["JUDGE_MODEL"] == "${JUDGE_MODEL:-gpt-5.6-terra}"
     verifier_image = (task / "tests" / "Dockerfile").read_text()
     assert "openai==" in verifier_image and "COPY . /tests/" in verifier_image
     # The agent image holds the conversation only: no judge client, no rubric.
@@ -378,6 +382,7 @@ def graded_task(tmp_path, fake_data, monkeypatch):
     for name in ("ORACLE_MODE", "JUDGE_MODEL", "JUDGE_REASONING_EFFORT"):
         monkeypatch.delenv(name, raising=False)
     return types.SimpleNamespace(
+        task=task,
         judge=judge,
         response=tmp_path / "response.txt",
         reward=tmp_path / "verifier" / "reward.json",
@@ -401,10 +406,10 @@ def test_full_score_when_every_positive_criterion_is_met(graded_task):
     assert prompt.count("assistant: mentions X and mentions Y") == 1
     assert "<think>" not in prompt
     # Upstream sends the judge no sampling or reasoning parameters.
-    assert graded_task.judge.kwargs[0] == {"model": "gpt-4.1"}
+    assert graded_task.judge.kwargs[0] == {"model": "gpt-5.6-terra"}
     grading = json.loads(graded_task.grading.read_text())
     assert [i["criteria_met"] for i in grading["items"]] == [True, True, False]
-    assert grading["judge_model_reported"] == ["gpt-4.1-snapshot"]
+    assert grading["judge_model_reported"] == ["gpt-5.6-terra-snapshot"]
 
 
 def test_negative_score_keeps_its_sign_in_score_and_floors_in_reward(graded_task):
@@ -475,6 +480,34 @@ def test_rejected_key_or_model_is_not_retried(graded_task):
     assert len(graded_task.judge.prompts) == 3
 
 
+def test_rejected_request_counts_as_not_met_as_upstream(graded_task):
+    """HTTP 400 (for example a reply too long for the judge's context) is caused
+    by the reply, so after upstream's retries the criterion is not met, as
+    upstream scores it, and grading.json says why."""
+
+    def reject_y(model, input, **kwargs):
+        if "# Rubric item\nmentions Y" in input:
+            graded_task.judge.prompts.append(input)
+            error = RuntimeError("context_length_exceeded")
+            error.status_code = 400
+            raise error
+        return FakeJudge.create(graded_task.judge, model, input, **kwargs)
+
+    graded_task.judge.create = reject_y
+    graded_task.response.write_text("mentions X and mentions Y")
+    assert grader.main() == 0
+    assert json.loads(graded_task.reward.read_text())["score"] == pytest.approx(10 / 12)
+    grading = json.loads(graded_task.grading.read_text())
+    rejected = grading["items"][1]
+    assert rejected["criteria_met"] is False
+    assert rejected["attempts"] == grader.MAX_RETRIES
+    assert (
+        "400" in rejected["judge_error"] and "context_length" in rejected["judge_error"]
+    )
+    assert grading["rejected_judge_requests"] == 1
+    assert "judge_error" not in grading["items"][0]
+
+
 def test_exhausted_judge_retries_fail_the_verifier_without_a_reward(graded_task):
     graded_task.judge.fail_times = 10**6
     graded_task.response.write_text("mentions X")
@@ -482,13 +515,41 @@ def test_exhausted_judge_retries_fail_the_verifier_without_a_reward(graded_task)
     assert not graded_task.reward.exists()
 
 
-def test_oracle_mode_checks_the_reply_without_calling_the_judge(
-    graded_task, monkeypatch
+def test_task_json_holds_the_sha256_of_the_oracle_reply(tmp_path, fake_data):
+    oracle_dir = tmp_path / "oracle"
+    oracle_dir.mkdir()
+    (oracle_dir / "finance-f1.txt").write_text("written reply\n")
+    out = generate(tmp_path, oracle_dir=oracle_dir)
+    for name in ("finance-f1", "finance-f2"):  # written reply, default outline
+        reply = run_solve(out / name, tmp_path / f"w-{name}")
+        record = json.loads((out / name / "tests" / "task.json").read_text())
+        assert record["oracle_sha256"] == hashlib.sha256(reply.encode()).hexdigest()
+
+
+def test_oracle_mode_gives_full_reward_only_to_the_oracle_reply(
+    graded_task, monkeypatch, tmp_path
 ):
     monkeypatch.setenv("ORACLE_MODE", "true")
-    assert grader.main() == 0
+    assert grader.main() == 0  # no reply
     assert json.loads(graded_task.reward.read_text())["reward"] == 0.0
-    graded_task.response.write_text("any reply")
+    oracle = run_solve(graded_task.task, tmp_path / "w-oracle")
+    graded_task.response.write_text(oracle)
     assert grader.main() == 0
     assert json.loads(graded_task.reward.read_text()) == {"reward": 1.0}
+    assert json.loads(graded_task.grading.read_text())["oracle_reply_matches"] is True
+    assert graded_task.judge.prompts == []
+
+
+def test_oracle_mode_left_set_on_an_agent_run_gives_no_reward(
+    graded_task, monkeypatch, capsys
+):
+    """ORACLE_MODE passes through from the host. If it is set on an agent run,
+    the agent's reply is not the oracle reply: reward 0, and the run says why."""
+    monkeypatch.setenv("ORACLE_MODE", "true")
+    graded_task.response.write_text("mentions X and mentions Y")
+    assert grader.main() == 0
+    assert json.loads(graded_task.reward.read_text()) == {"reward": 0.0}
+    grading = json.loads(graded_task.grading.read_text())
+    assert grading["oracle_reply_matches"] is False
+    assert "ORACLE_MODE" in capsys.readouterr().err
     assert graded_task.judge.prompts == []

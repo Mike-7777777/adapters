@@ -16,18 +16,22 @@ floored at 0. A single task's score can be negative, so reward.json holds
     score             the unclipped task score; average it, then floor at 0
     score_normalized  the min-normalized task score, in [0, 1]
 
-Two deliberate departures. Upstream counts a criterion as not met when the judge
-call still fails after its retries; here the verifier exits non-zero instead,
-so Harbor records a verifier error rather than a lowered score. And a missing
-or empty reply scores 0 without a judge call, where upstream would send the
-empty reply to the judge.
+A judge call that still fails after upstream's retries counts as not met, as
+upstream counts it, when the endpoint rejected the request itself (HTTP 400, for
+example a reply too long for the judge's context); grading.json records the
+error. Any other failure (timeouts, 5xx, a rejected key or model) makes the
+verifier exit non-zero, so Harbor records a verifier error rather than a score
+lowered by an outage. One deliberate departure: a missing or empty reply scores
+0 without a judge call, where upstream would send the empty reply to the judge.
 
-ORACLE_MODE=true skips the judge and checks only that the task data loads and
-a non-empty reply was written (see the adapter README).
+ORACLE_MODE=true skips the judge and gives reward 1.0 only when the reply is
+byte for byte the oracle reply of solution/solve.sh, whose sha256 task.json
+holds (see the adapter README).
 """
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -42,6 +46,7 @@ LOG_DIR = Path("/logs/verifier")
 MAX_RETRIES = 5
 RETRY_BACKOFF_SECONDS = 2
 JUDGE_TIMEOUT_SECONDS = 300
+DEFAULT_JUDGE_MODEL = "gpt-5.6-terra"
 
 GRADER_TEMPLATE = """Your job is to look at a conversation and a rubric item, and score the last turn (i.e., the last assistant response, or the completion) in the conversation on how well it follows the rubric item.
 
@@ -127,37 +132,41 @@ def write_reward(rewards: dict[str, float], details: dict) -> None:
     (LOG_DIR / "grading.json").write_text(json.dumps(details, indent=2))
 
 
-def judge(client, model: str, effort: str, prompt: str) -> tuple[str, int, str]:
+def judge(
+    client, model: str, effort: str, prompt: str
+) -> tuple[str, int, str | None, str | None]:
     """One judge call with upstream's retry count and backoff.
 
-    Returns the judge's text, the attempt that produced it and the model name
-    the endpoint reported. A rejected key or an unknown model is not retried.
+    Returns the judge's text, the number of attempts, the model name the
+    endpoint reported and, for a request the endpoint rejected (HTTP 400), the
+    error, with empty text, which counts as not met. A rejected key or an
+    unknown model is not retried.
     """
     kwargs = {"reasoning": {"effort": effort}} if effort else {}
     for attempt in range(1, MAX_RETRIES + 1):
         try:
             out = client.responses.create(model=model, input=prompt, **kwargs)
-            return out.output_text or "", attempt, getattr(out, "model", None) or model
+            reported = getattr(out, "model", None) or model
+            return out.output_text or "", attempt, reported, None
         except Exception as exc:  # noqa: BLE001 - retried, then reported
-            error = f"{type(exc).__name__}: {exc}"
-            if getattr(exc, "status_code", None) in (401, 403, 404):
+            status = getattr(exc, "status_code", None)
+            error = f"{type(exc).__name__} (HTTP {status}): {exc}"
+            if status in (401, 403, 404):
                 break
         if attempt < MAX_RETRIES:
             time.sleep(RETRY_BACKOFF_SECONDS * attempt)
+    if status == 400:
+        return "", attempt, None, error
     raise RuntimeError(f"judge failed after {attempt} attempts: {error}")
 
 
 def main() -> int:
     record = json.loads(TASK_PATH.read_text())
     weights = [item["weight"] for item in record["rubric"]]
+    raw = RESPONSE_PATH.read_bytes() if RESPONSE_PATH.is_file() else b""
     # Bytes that are not UTF-8 are replaced, so a malformed reply is still a
     # reply and gets graded.
-    response = (
-        RESPONSE_PATH.read_text(encoding="utf-8", errors="replace")
-        if RESPONSE_PATH.is_file()
-        else ""
-    )
-    response = remove_thinking_tags(response)
+    response = remove_thinking_tags(raw.decode("utf-8", errors="replace"))
     if not response:
         zero = score_task([False] * len(weights), weights)
         write_reward(
@@ -166,7 +175,17 @@ def main() -> int:
         )
         return 0
     if os.environ.get("ORACLE_MODE", "").lower() == "true":
-        write_reward({"reward": 1.0}, {"oracle_mode": True})
+        matches = hashlib.sha256(raw).hexdigest() == record["oracle_sha256"]
+        if not matches:
+            print(
+                "ORACLE_MODE=true, but the reply is not the oracle reply: reward 0. "
+                "Unset ORACLE_MODE for agent runs.",
+                file=sys.stderr,
+            )
+        write_reward(
+            {"reward": 1.0 if matches else 0.0},
+            {"oracle_mode": True, "oracle_reply_matches": matches},
+        )
         return 0
 
     from openai import OpenAI
@@ -176,7 +195,7 @@ def main() -> int:
         timeout=JUDGE_TIMEOUT_SECONDS,
         max_retries=0,
     )
-    model = os.environ.get("JUDGE_MODEL") or "gpt-4.1"
+    model = os.environ.get("JUDGE_MODEL") or DEFAULT_JUDGE_MODEL
     effort = os.environ.get("JUDGE_REASONING_EFFORT", "")
     workers = int(os.environ.get("JUDGE_CONCURRENCY") or 8)
 
@@ -196,27 +215,31 @@ def main() -> int:
         print(exc, file=sys.stderr)
         return 1
 
-    verdicts = [get_criteria_met(text) for text, _, _ in outputs]
+    verdicts = [get_criteria_met(text) for text, *_ in outputs]
     scores = score_task(verdicts, weights)
+    items = []
+    for item, met, (text, attempts, _, error) in zip(
+        record["rubric"], verdicts, outputs
+    ):
+        entry = {
+            "id": item["id"],
+            "weight": item["weight"],
+            "criteria_met": met,
+            "judge_output": text,
+            "attempts": attempts,
+        }
+        if error:
+            entry["judge_error"] = error
+        items.append(entry)
     write_reward(
         {"reward": max(0.0, scores["score"]), **scores},
         {
             **scores,
             "response_chars": len(response),
             "judge_model": model,
-            "judge_model_reported": sorted({reported for _, _, reported in outputs}),
-            "items": [
-                {
-                    "id": item["id"],
-                    "weight": item["weight"],
-                    "criteria_met": met,
-                    "judge_output": text,
-                    "attempts": attempts,
-                }
-                for item, met, (text, attempts, _) in zip(
-                    record["rubric"], verdicts, outputs
-                )
-            ],
+            "judge_model_reported": sorted({r for _, _, r, _ in outputs if r}),
+            "rejected_judge_requests": sum(bool(e) for *_, e in outputs),
+            "items": items,
         },
     )
     return 0
