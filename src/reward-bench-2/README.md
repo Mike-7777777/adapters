@@ -163,7 +163,7 @@ Scores are mean ± sample SEM over three runs per side, in percent; per-run scor
 
 The run ranges overlap for the average and for every subset.
 
-Precise IF is the one subset where Harbor is lower in every run (70, 75 and 72.5 against 75, 80 and 75), and the ranges meet only at 75.0. The gap is 5 correct judgments out of 120 per side. 9 of the 40 tasks differ between sides, 5 in favour of the original side and 4 in favour of Harbor. Most of the gap is one task: `precise-if-0` was judged correctly in 3 of 3 original runs and 0 of 3 Harbor runs, with byte-identical instructions. It is the only one of the 200 best-of-4 parity tasks whose result differs in all three runs.
+Precise IF is the one subset where Harbor is lower in every run (70, 75 and 72.5 against 75, 80 and 75), and the ranges meet only at 75.0. The gap is 5 correct judgments out of 120 per side. 9 of the 40 tasks differ between sides, 5 in favour of the original side and 4 in favour of Harbor. Most of the gap is one task: `precise-if-0` was judged correctly in 3 of 3 original runs and 0 of 3 Harbor runs, with byte-identical instructions. It is the only one of the 200 best-of-4 parity tasks that is correct in every run on one side and wrong in every run on the other.
 
 Parity cost: $4.54 of agent cost reported by Claude Code. That is $2.19 for the original runs, $2.28 for the Harbor runs, $0.06 for the sanity checks and $0.004 for the probe; the two discarded attempts were not recorded.
 
