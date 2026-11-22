@@ -43,7 +43,7 @@
           "None"
         ],
         "parity_costs": "$202",
-        "notes": "Oracle run (ORACLE_MODE=true) and nop run cover all 1100 tasks. Parity on a 200-task subset (--split parity), 100 per domain, stratified by hard-subset membership and topic: two runs per side, run ranges overlap on both domains and overall. parity_costs is an upper bound for runs 1 and 2 (the endpoint's total usage over the two runs)."
+        "notes": "Oracle and nop runs cover all 1100 tasks: on Harbor 0.27.0 at this revision, where ORACLE_MODE=true gives reward 1.0 only to the reply of solution/solve.sh (checked by sha256), and on Harbor 0.26.0 at the parity revision. Parity on a 200-task subset (--split parity), 100 per domain, stratified by hard-subset membership and topic: two runs per side, run ranges overlap on both domains and overall, paired per-task difference +0.0002 +/- 0.0059 (SE). parity_costs is an upper bound for the two runs (the endpoint's total usage over the two runs)."
       }
     ]
   }

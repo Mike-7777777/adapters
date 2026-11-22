@@ -1,15 +1,18 @@
-# Parity runs on the 200-task subset; runs 1 and 2 used this file with
-# JUDGE_MODEL=gpt-5.6-terra. From the repository root:
-#   uv run --project src/prbench prbench --split parity --output-dir datasets/prbench-parity
-#   harbor run -c src/prbench/prbench_parity.yaml
-# The judge comes from task.toml (JUDGE_MODEL, default gpt-4.1) and reads
-# OPENAI_API_KEY / OPENAI_BASE_URL from the host environment.
+# The Harbor job config of the two reported parity runs (2026-11-21), as they ran
+# (the same settings as config.yaml in the parity-experiments upload): Harbor
+# 0.26.0, the judge set on the host with JUDGE_MODEL=gpt-5.6-terra (now the
+# task.toml default). From the repository root:
+#   uv run --project src/prbench prbench --split parity --output-dir datasets/parity200
+#   export ANTHROPIC_API_KEY=... OPENAI_API_KEY=...   # and the two *_BASE_URL if not the vendors'
+#   JUDGE_MODEL=gpt-5.6-terra uvx --from harbor==0.26.0 harbor run -c src/prbench/prbench_parity.yaml
+# The verifier reads OPENAI_API_KEY / OPENAI_BASE_URL / JUDGE_MODEL from the host
+# environment (task.toml [verifier.env]).
 jobs_dir: jobs
 n_attempts: 1
 timeout_multiplier: 1.0
 orchestrator:
   type: local
-  n_concurrent_trials: 4
+  n_concurrent_trials: 12
   quiet: false
 environment:
   type: docker
@@ -24,4 +27,4 @@ agents:
     kwargs:
       version: "2.1.322"  # the same Claude Code build on the original-benchmark side
 datasets:
-  - path: datasets/prbench-parity
+  - path: datasets/parity200
