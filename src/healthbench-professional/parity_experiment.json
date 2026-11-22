@@ -12,9 +12,11 @@
     "adapter_pr": [
       "https://github.com/harbor-framework/adapters/pull/24"
     ],
-    "dataset_pr": [],
+    "dataset_pr": [
+      "https://github.com/harbor-framework/harbor-datasets/pull/293"
+    ],
     "parity_pr": [
-      "https://huggingface.co/datasets/mike-7777777/harbor-parity-experiments/tree/ff1ec151bfb9c092c660e826476bc47e1d30db44/adapters/healthbench-professional"
+      "https://huggingface.co/datasets/mike-7777777/harbor-parity-experiments/tree/fc35a2ddb2f1724de9d390154c60018a7dbf3ea6/adapters/healthbench-professional"
     ],
     "metrics": [
       {

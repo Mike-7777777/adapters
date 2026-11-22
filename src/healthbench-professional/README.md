@@ -8,7 +8,7 @@ This adapter turns the 525 public conversations of HealthBench Professional into
 - Original evaluation: [openai/simple-evals](https://github.com/openai/simple-evals/tree/652c89d0ca9df547706735883097e9537d40dc47) `healthbench_eval.py` at `652c89d`, which calls a model API directly, with no agent. The dataset README calls it the unofficial external implementation; the paper's numbers come from OpenAI's internal implementation.
 - Adapted size: 525 tasks.
 - Oracle: on Harbor 0.26.0 with the separate verifier, 523 of 525 tasks reach reward 1.0 on the first attempt and the other two on each of three retries; see [Notes & Caveats](#notes--caveats). Parity on the 150-task subset matches: 3 runs per side, and the run ranges overlap; see [Comparison with Original Benchmark](#comparison-with-original-benchmark-parity).
-- Links: adapter PR [harbor-framework/adapters#24](https://github.com/harbor-framework/adapters/pull/24); dataset PR to harbor-datasets (pending); parity results on [Hugging Face](https://huggingface.co/datasets/mike-7777777/harbor-parity-experiments/tree/ff1ec151bfb9c092c660e826476bc47e1d30db44/adapters/healthbench-professional); fork for the original side [Mike-7777777/simple-evals@6503101](https://github.com/Mike-7777777/simple-evals/tree/6503101e1b669f7040f27ddd4d063090ad7765e5).
+- Links: adapter PR [harbor-framework/adapters#24](https://github.com/harbor-framework/adapters/pull/24); dataset PR [harbor-framework/harbor-datasets#293](https://github.com/harbor-framework/harbor-datasets/pull/293); parity results on [Hugging Face](https://huggingface.co/datasets/mike-7777777/harbor-parity-experiments/tree/fc35a2ddb2f1724de9d390154c60018a7dbf3ea6/adapters/healthbench-professional); fork for the original side [Mike-7777777/simple-evals@6503101](https://github.com/Mike-7777777/simple-evals/tree/6503101e1b669f7040f27ddd4d063090ad7765e5).
 
 ## What is HealthBench Professional?
 
@@ -76,7 +76,7 @@ uv run healthbench-professional --output-dir ../../datasets/healthbench-professi
 
 Options: `--limit N`, `--task-ids ID ...`, `--overwrite`, `--source PATH` (a local copy of the pinned file; its sha256 is still checked), `--oracle-dir DIR` (`<task_id>.txt` oracle replies for `solution/solve.sh`; without it `solve.sh` exits 1), `--split {full,parity}` (`parity`: the 150-task parity subset).
 
-The 525 oracle replies are on Hugging Face, encrypted: from the [parity folder](https://huggingface.co/datasets/mike-7777777/harbor-parity-experiments/tree/ff1ec151bfb9c092c660e826476bc47e1d30db44/adapters/healthbench-professional), download `oracle/oracle_replies.tar.gz.enc` and `scripts/decrypt.py` into the same layout and run `python3 scripts/decrypt.py`; the replies land in `oracle/oracle_replies/`, the directory to pass as `--oracle-dir`. The tasks submitted to harbor-datasets are generated with them, so `solve.sh` there works without this step.
+The 525 oracle replies are on Hugging Face, encrypted: from the [parity folder](https://huggingface.co/datasets/mike-7777777/harbor-parity-experiments/tree/fc35a2ddb2f1724de9d390154c60018a7dbf3ea6/adapters/healthbench-professional), download `oracle/oracle_replies.tar.gz.enc` and `scripts/decrypt.py` into the same layout and run `python3 scripts/decrypt.py`; the replies land in `oracle/oracle_replies/`, the directory to pass as `--oracle-dir`. The tasks submitted to harbor-datasets are generated with them, so `solve.sh` there works without this step.
 
 Unit tests: `uv run pytest tests`.
 
@@ -132,7 +132,7 @@ Mean ± sample SEM over runs. Run scores: original 0.5974, 0.6506, 0.6014; Harbo
 
 Harbor shows the mean of each reward key, `reward` first. The mean per-task clipped `reward` is higher than the benchmark score: original 0.6434 ± 0.0137 (0.6264, 0.6706, 0.6333), Harbor 0.6320 ± 0.0031 (0.6339, 0.6259, 0.6363), and these ranges overlap too.
 
-Results of every attempt, the oracle runs and the aggregation script are on Hugging Face: [mike-7777777/harbor-parity-experiments](https://huggingface.co/datasets/mike-7777777/harbor-parity-experiments/tree/ff1ec151bfb9c092c660e826476bc47e1d30db44/adapters/healthbench-professional), pinned, with a SHA256 manifest; the shared parity-experiments dataset is over Hugging Face's file limit ([#129](https://github.com/harbor-framework/adapters/issues/129)). Agent logs, replies and judge outputs contain conversation and rubric text, so they are encrypted with the dataset's canary string; `scripts/decrypt.py` there unpacks them.
+Results of every attempt, the oracle runs and the aggregation script are on Hugging Face: [mike-7777777/harbor-parity-experiments](https://huggingface.co/datasets/mike-7777777/harbor-parity-experiments/tree/fc35a2ddb2f1724de9d390154c60018a7dbf3ea6/adapters/healthbench-professional), pinned, with a SHA256 manifest; the shared parity-experiments dataset is over Hugging Face's file limit ([#129](https://github.com/harbor-framework/adapters/issues/129)). Agent logs, replies and judge outputs contain conversation and rubric text, so they are encrypted with the dataset's canary string; `scripts/decrypt.py` there unpacks them.
 
 Other checks:
 
