@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Harbor adapter for RewardBench 2 (allenai/reward-bench-2)"
 readme = "README.md"
 authors = [
-    { name = "Mike-7777777", email = "41225783+Mike-7777777@users.noreply.github.com" }
+    { name = "Qumeng Sun", email = "41225783+Mike-7777777@users.noreply.github.com" }
 ]
 requires-python = ">=3.13"
 dependencies = [
