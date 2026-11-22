@@ -12,10 +12,12 @@
     "adapter_pr": [
       "https://github.com/harbor-framework/adapters/pull/84"
     ],
-    "dataset_pr": [],
+    "dataset_pr": [
+      "https://github.com/harbor-framework/harbor-datasets/pull/294"
+    ],
     "parity_pr": [
       "https://huggingface.co/datasets/harborframework/parity-experiments/discussions/289",
-      "https://huggingface.co/datasets/mike-7777777/harbor-parity-experiments/tree/0fdc8d523e2466bc1153771907754650a4c9d738/adapters/reward-bench-2"
+      "https://huggingface.co/datasets/mike-7777777/harbor-parity-experiments/tree/419cf67d839f927aa72fc6914c50d8aa3b19050c/adapters/reward-bench-2"
     ],
     "metrics": [
       {
