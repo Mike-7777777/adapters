@@ -88,7 +88,7 @@ Unit tests: `uv run pytest tests`.
 
 ## Comparison with Original Benchmark (Parity)
 
-Scenario 2: the original harness has no agent, so a [fork of scaleapi/PRBench](https://github.com/Mike-7777777/PRBench/tree/e7b4453a1e4bb543f8726efced94355087cea6fc) (commit `e7b4453`) gets a runner that produces each reply with the same agent, instruction and `conversation.md` as the Harbor task, then grades the replies with the fork's `evals.py` and `final_response_source: prefilled`. The fork changes no scoring code; [`HARBOR_PARITY.md`](https://github.com/Mike-7777777/PRBench/blob/e7b4453a1e4bb543f8726efced94355087cea6fc/HARBOR_PARITY.md) lists its changes (dataset revision pin, task-id filter, no sampling arguments for prefilled replies, exit on failed judge calls, the reference-text fix below). Both sides use the same judge model. Benchmark score on each side: the mean unclipped task score, floored at 0 after averaging.
+Scenario 2: the original harness has no agent, so a [fork of scaleapi/PRBench](https://github.com/Mike-7777777/PRBench/tree/e7b4453a1e4bb543f8726efced94355087cea6fc) (commit `e7b4453`) gets a runner that produces each reply with the same agent, instruction and `conversation.md` as the Harbor task, then grades the replies with the fork's `evals.py` and `final_response_source: prefilled`. The fork changes no scoring code; [`HARBOR_PARITY.md`](https://github.com/Mike-7777777/PRBench/blob/55ffed087ca9fc55af0391fe5fbc3a9d31a837db/HARBOR_PARITY.md) (updated after the runs; the code is at `e7b4453`) lists its changes (dataset revision pin, task-id filter, no sampling arguments for prefilled replies, exit on failed judge calls, the reference-text fix below). Both sides use the same judge model. Benchmark score on each side: the mean unclipped task score, floored at 0 after averaging.
 
 **Parity subset.** `--split parity` generates the 200 tasks listed in `src/prbench/parity_task_ids.txt`, 100 per domain, which the original side reads too. Within a domain the subset is stratified by hard-subset membership and topic: each stratum gets seats in proportion to its size (largest remainder), and within a stratum records are taken in sha256 order of `<domain>-<task>`. `select_parity_ids` in `adapter.py` reproduces the list, and generation stops if the two differ. 5 of the 200 tasks carry reference texts.
 
@@ -100,7 +100,7 @@ export ANTHROPIC_API_KEY=... OPENAI_API_KEY=...   # and ANTHROPIC_BASE_URL / OPE
 JUDGE_MODEL=gpt-5.6-terra uvx --from harbor==0.26.0 harbor run -c src/prbench/prbench_parity.yaml
 ```
 
-Original side, from the fork at `e7b4453` (`HARBOR_PARITY.md` there), one `--trial` per run:
+Original side, from the fork at `e7b4453` ([`HARBOR_PARITY.md`](https://github.com/Mike-7777777/PRBench/blob/55ffed087ca9fc55af0391fe5fbc3a9d31a837db/HARBOR_PARITY.md)), one `--trial` per run:
 
 ```bash
 CLAUDE_CODE_VERSION=2.1.322 python harbor_parity/run_agent.py --model claude-haiku-5-5 --trial 1 --out harbor_runs/run1 --judge_model gpt-5.6-terra --num_threads 12
@@ -108,7 +108,7 @@ python evals.py harbor_runs/run1/config_finance.yaml
 python evals.py harbor_runs/run1/config_legal.yaml
 ```
 
-Two runs per side (2026-11-21), on adapter commit `4691d49`; later commits change no file the agent sees (the generated `instruction.md`, `conversation.md` and agent image are byte-identical), only the grader's handling of oracle mode and rejected judge requests, neither of which occurred in these runs. Claude Code 2.1.322 with `claude-haiku-5-5` and the judge `gpt-5.6-terra` on both sides, Harbor 0.26.0. Scores are the benchmark score in percent, mean ± sample SEM over runs.
+Two runs per side (2026-11-21), on adapter commit `4691d49`; later commits change no file the agent sees (the generated `instruction.md`, `conversation.md` and agent image are byte-identical). They change the grader's handling of `ORACLE_MODE` and of judge requests the endpoint rejects (HTTP 400), neither of which occurred in these runs, the default `JUDGE_MODEL` (now the parity judge), the `difficulty` label and the docs. Claude Code 2.1.322 with `claude-haiku-5-5` and the judge `gpt-5.6-terra` on both sides, Harbor 0.26.0. Scores are the benchmark score in percent, mean ± sample SEM over runs.
 
 | Agent | Model | Metric | Number of Runs | Dataset Size | Original Benchmark Performance | Harbor Adapter Performance |
 |---|---|---|---|---|---|---|
@@ -161,6 +161,7 @@ Checks without the agent; only the representative-task jobs call a model:
 - `sha256 mismatch`: the downloaded file differs from the pinned revision; check `HF_ENDPOINT` or the `--source-dir` files.
 - `download failed after 3 attempts`: Hugging Face is unreachable; set `HF_ENDPOINT` to a mirror or pass `--source-dir`.
 - Verifier error with `Missing credentials`: an agent run needs `OPENAI_API_KEY` for the judge.
+- Every criterion not met, reward 0, no verifier error, and `rejected_judge_requests` equal to the number of criteria in `grading.json`: the endpoint rejected every judge request (HTTP 400). One cause is `JUDGE_REASONING_EFFORT` set for a judge model that takes no reasoning effort; unset it.
 - Verifier error with `judge failed after N attempts`: the judge endpoint kept failing or rejected the request; check `OPENAI_BASE_URL`, `JUDGE_MODEL` and the key.
 - `task ids not in split`: `--task-ids` takes generated task ids such as `finance-<task>`, and they must belong to the chosen `--split`.
 
