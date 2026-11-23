@@ -32,8 +32,8 @@
         "parity_unmatching_agents": [
           "None"
         ],
-        "parity_costs": "$24",
-        "notes": "Oracle: Harbor 0.26.0 with the separate verifier, 523 of 525 tasks reach reward 1.0 on the first attempt; in the other two the judge marked a negative rubric item as met, and the same replies reach 1.0 in each of three more attempts (Harbor 0.25.0, earlier layout: 525 of 525). Parity on the 150-task stratified subset (--split parity), three runs per side, Harbor 0.26.0; the run ranges overlap. Parity cost about $24, all nine 150-task runs (a discarded first Harbor batch included) and both 10-task checks: $4.34 agent cost reported by Claude Code, the rest the gpt-5.4 judge (about $2 to $2.50 per 150-task run). Registry: openai/healthbench-professional (525 tasks) and openai/healthbench-professional-parity (the 150-task subset), tag v1.0 requested for both."
+        "parity_costs": "$17",
+        "notes": "Oracle: Harbor 0.27.0 with the separate verifier, 523 of 525 tasks reach reward 1.0 (522 on the first attempt, plus caa25e34 with a revised reply, 1.0 in 5 of 5 attempts); in the other two the judge's verdict on one rubric item changes between gradings of the same reply (1.0 in 3 of 4 and in 1 of 4 attempts). Parity on the 150-task stratified subset (--split parity), three runs per side, Harbor 0.27.0; the run ranges overlap. Parity cost about $17 (1- and 10-task checks, three runs per side, timeout reruns): $3.00 agent cost reported by Claude Code, the rest the gpt-5.4 judge (about $2.25 per 150-task run). Registry: openai/healthbench-professional, tags v1.0 (525 tasks) and parity (the 150-task subset) requested."
       }
     ]
   }
