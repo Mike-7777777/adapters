@@ -3,11 +3,11 @@
     "adapter_name": "reward-bench-2",
     "agent": "claude-code@2.1.330",
     "model": "claude-haiku-5-5",
-    "date": "2026-11-21",
+    "date": "2026-11-23",
     "adapted_benchmark_size": 1865,
     "parity_benchmark_size": 302,
     "number_of_runs": 3,
-    "notes": "302-task subset (parity_task_ids.txt): all 102 Ties tasks plus 40 tasks from each of the five best-of-4 subsets. Setup, identical on both sides: Claude Code 2.1.330 installed with the same bootstrap.sh command; model claude-haiku-5-5, which is the exact API ID (Claude Haiku 5.5 has no dated snapshot); the same Anthropic-compatible endpoint (https://app.ppapi.ai); the same launch flags, environment variables, working directory, tool list and 600 s agent timeout; the same task instructions (byte-identical). Harbor side: Harbor 0.26.0 with the separate verifier, -n 12. Original side: scripts/run_generative_v2_agent.py in the fork with 8 threads; it starts Claude Code in a container the way Harbor's claude-code agent does and scores with the harness's own functions. Scores on both sides come from the official aggregation: accuracy per best-of-4 subset (an unparseable judgment counts 0.25), the Ties score over the 51 ref/tied pairs, and their unweighted mean; Harbor scores are from reward-bench-2-score. Both sides use the adapter's Ties task (all responses of a row rated in one session) and score a missing or empty judgment 0; both differ from the published harness, see the README. Code: every run used adapter code identical to commit 9ac448f and fork code identical to commit 07dc3c5; the task-generating code is unchanged from 9ac448f to the PR head, and tasks regenerated at the head are byte-identical to the ones the runs used. Run history (2026-11-21 UTC): a 1-task Harbor probe and a 10-task sanity check on each side ran 03:13-03:27. Original run 1 and Harbor run 1 both started at 05:42; the original side finished its three runs, one after another, at 06:23, when Harbor run 1 had 94 of 302 trials, so the required order (one full run on both sides before three) was not kept. Harbor run 1 stopped at 169/302 at 06:52 when its terminal closed, was resumed with harbor job resume at 06:55 and finished at 07:58; Harbor runs 2 and 3 ran in parallel 06:52-08:57. On resume Harbor deleted two attempts (safety-1177, safety-1182) that had finished the agent step but not grading; both tasks were rerun in the resumed job, and the discarded attempts and their cost are not in the results. The runs were not repeated in the required order: code, task files, instructions and grading did not change between them. All 906 trials per side ended with no trial exceptions and no failed agent runs. Web tools were enabled on both sides; no parity session used WebFetch, WebSearch or a network command. Agent cost reported by Claude Code: $2.19 original, $2.28 Harbor, plus $0.06 for the sanity checks and $0.004 for the probe ($4.54 in all).",
+    "notes": "302-task subset (parity_task_ids.txt): all 102 Ties tasks plus 40 tasks from each of the five best-of-4 subsets. Setup, identical on both sides: Claude Code 2.1.330 installed with the same bootstrap.sh command; model claude-haiku-5-5, which is the exact API ID (Claude Haiku 5.5 has no dated snapshot); the same Anthropic-compatible endpoint (https://app.ppapi.ai); the same launch flags, environment variables, working directory, tool list and 600 s agent timeout; the same task instructions (byte-identical). Harbor side: Harbor 0.27.0 with the separate verifier. Original side: scripts/run_generative_v2_agent.py in the fork; it starts Claude Code in a container the way Harbor's claude-code agent does and scores with the harness's own functions. Concurrency: run 1 with Harbor -n 12 and 8 original threads, runs 2 and 3 with -n 4 and 4 threads while another job shared the host; each trial runs in its own container, so concurrency does not change a single trial. Scores on both sides come from the official aggregation: accuracy per best-of-4 subset (an unparseable judgment counts 0.25), the Ties score over the 51 ref/tied pairs, and their unweighted mean; Harbor scores are from reward-bench-2-score. Both sides use the adapter's Ties task (all responses of a row rated in one session) and score a missing or empty judgment 0; both differ from the published harness, see the README. Code: adapter commit 1c6b656 and fork commit a55a283; the task-generating code is unchanged from 1c6b656 to the PR head. Run history (2026-11-23 UTC), in the required order: a 1-task Harbor probe and a 10-task sanity check on each side 01:18-01:31; run 1 on both sides from 01:31 (original done 02:08, Harbor 03:30); runs 2 and 3 on both sides from 03:51 (original done 06:15, Harbor 17:01). Agent timeouts: in runs 2 and 3 some sessions hit the 600 s timeout because their API calls stalled (both sides share the endpoint; run 1 had 0 API retries on either side). Each timed-out trial was rerun once and the rerun is scored whatever its outcome; first timeouts / left after the rerun: Harbor run 2 8/0, Harbor run 3 8/0, original run 3 4/0, none elsewhere. Harbor reran with harbor job resume -f AgentTimeoutError; the original reruns also ran the Ties partner of each timed-out task, which keeps its first result. Every first attempt is kept in the results upload. From the second Harbor probe on, the API key reached docker compose exec through the process environment instead of the command line (a sitecustomize hook; Harbor's files unchanged); the container receives the same variables. An earlier batch (2026-11-21, Harbor 0.26.0) did not keep the required order and was rerun in order; it is kept unchanged in the results upload (superseded/2026-11-21/), and these numbers are the rerun. Web tools were enabled on both sides; no parity session used WebFetch, WebSearch or a network command. Agent cost reported by Claude Code: $2.79 Harbor, $2.33 original (reruns included), plus $0.06 for the sanity checks and $0.009 for the two probes ($5.19 in all).",
     "original_parity_repo": "https://github.com/Mike-7777777/reward-bench/tree/harbor-parity",
     "adapter_pr": [
       "https://github.com/harbor-framework/adapters/pull/84"
@@ -17,66 +17,66 @@
     ],
     "parity_pr": [
       "https://huggingface.co/datasets/harborframework/parity-experiments/discussions/289",
-      "https://huggingface.co/datasets/mike-7777777/harbor-parity-experiments/tree/419cf67d839f927aa72fc6914c50d8aa3b19050c/adapters/reward-bench-2"
+      "https://huggingface.co/datasets/mike-7777777/harbor-parity-experiments/tree/a2a5e582173b98c1ff48e15f53a33379202e7055/adapters/reward-bench-2"
     ],
     "metrics": [
       {
         "benchmark_name": "RewardBench 2",
         "metric": "average over six subsets",
-        "original": "83.08 ± 0.4531",
-        "harbor": "82.52 ± 1.2146",
+        "original": "83.14 ± 0.7204",
+        "harbor": "82.57 ± 0.7190",
         "original_runs": [
-          83.78,
-          83.22,
-          82.23
+          84.11,
+          83.57,
+          81.73
         ],
         "harbor_runs": [
-          80.18,
-          84.26,
-          83.11
+          82.23,
+          83.95,
+          81.53
         ]
       },
       {
         "benchmark_name": "RewardBench 2",
         "metric": "Factuality",
-        "original": "76.04 ± 0.7507",
-        "harbor": "75.83 ± 3.0046",
+        "original": "77.50 ± 1.4434",
+        "harbor": "77.50 ± 1.4434",
         "original_runs": [
+          80.0,
           77.5,
-          75.63,
           75.0
         ],
         "harbor_runs": [
-          70.0,
           80.0,
+          75.0,
           77.5
         ]
       },
       {
         "benchmark_name": "RewardBench 2",
         "metric": "Precise IF",
-        "original": "76.67 ± 1.6667",
+        "original": "71.67 ± 2.2048",
         "harbor": "72.50 ± 1.4434",
         "original_runs": [
           75.0,
-          80.0,
-          75.0
+          72.5,
+          67.5
         ],
         "harbor_runs": [
-          70.0,
+          72.5,
           75.0,
-          72.5
+          70.0
         ]
       },
       {
         "benchmark_name": "RewardBench 2",
         "metric": "Math",
-        "original": "87.71 ± 0.2100",
+        "original": "88.54 ± 0.7507",
         "harbor": "89.17 ± 0.8333",
         "original_runs": [
           87.5,
           88.13,
-          87.5
+          90.0
         ],
         "harbor_runs": [
           87.5,
@@ -87,31 +87,31 @@
       {
         "benchmark_name": "RewardBench 2",
         "metric": "Safety",
-        "original": "86.67 ± 1.6667",
-        "harbor": "85.83 ± 0.8333",
+        "original": "90.00 ± 1.4434",
+        "harbor": "84.17 ± 2.2048",
         "original_runs": [
+          92.5,
           90.0,
-          85.0,
-          85.0
+          87.5
         ],
         "harbor_runs": [
-          87.5,
           85.0,
-          85.0
+          87.5,
+          80.0
         ]
       },
       {
         "benchmark_name": "RewardBench 2",
         "metric": "Focus",
-        "original": "79.17 ± 0.8333",
-        "harbor": "79.17 ± 2.2048",
+        "original": "77.50 ± 1.4434",
+        "harbor": "80.00 ± 1.4434",
         "original_runs": [
+          75.0,
           80.0,
-          77.5,
-          80.0
+          77.5
         ],
         "harbor_runs": [
-          75.0,
+          77.5,
           82.5,
           80.0
         ]
@@ -119,17 +119,17 @@
       {
         "benchmark_name": "RewardBench 2",
         "metric": "Ties",
-        "original": "92.23 ± 0.6755",
-        "harbor": "92.61 ± 0.7818",
+        "original": "93.61 ± 0.5492",
+        "harbor": "92.09 ± 0.8351",
         "original_runs": [
-          92.69,
-          93.1,
-          90.9
+          94.68,
+          93.29,
+          92.86
         ],
         "harbor_runs": [
-          91.09,
-          93.07,
-          93.68
+          90.88,
+          93.69,
+          91.69
         ]
       }
     ]
