@@ -184,4 +184,4 @@ API inference compute for running parity tests is generously supported by [2077A
 
 ## Authors & Contributions
 
-Adapter: Qumeng Sun (@Mike-7777777). Issues and questions: open an issue or ask in `#adapters-spam` on the Harbor Discord.
+Adapter: Qumeng Sun (@Mike-7777777). Issues and questions: open an issue in this repository.
