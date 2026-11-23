@@ -50,7 +50,11 @@ Once the dataset is published to the registry:
 harbor run -d scaleai/prbench -a <agent> -m "<model>"
 ```
 
-The 200-task parity subset goes to the registry as its own dataset, `scaleai/prbench-parity` (see Parity).
+The 200-task parity subset is published under the `parity` tag (see Parity):
+
+```bash
+harbor run -d scaleai/prbench@parity -a <agent> -m "<model>"
+```
 
 From locally generated tasks. The verifier calls the judge through the OpenAI Responses API:
 
