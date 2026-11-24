@@ -16,7 +16,7 @@
       "https://github.com/harbor-framework/harbor-datasets/pull/293"
     ],
     "parity_pr": [
-      "https://huggingface.co/datasets/mike-7777777/harbor-parity-experiments/tree/main/adapters/healthbench-professional"
+      "https://huggingface.co/datasets/mike-7777777/harbor-parity-experiments/tree/0710fca6ddea84db2bf631367ad5e2c4277c2406/adapters/healthbench-professional"
     ],
     "metrics": [
       {
