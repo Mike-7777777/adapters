@@ -4,7 +4,7 @@
 
 This adapter turns the 1,100 public conversations of PRBench (600 Finance, 500 Legal) into Harbor tasks. Each task asks the agent to write the assistant's next reply to a professional finance or legal conversation; the verifier grades the reply against the expert-written weighted rubric with an LLM judge, using the grader prompt and scoring of the original harness.
 
-- Source: Hugging Face [`ScaleAI/PRBench`](https://huggingface.co/datasets/ScaleAI/PRBench), CC-BY-4.0, pinned to revision `01947c6e`.
+- Source: Hugging Face [`ScaleAI/PRBench`](https://huggingface.co/datasets/ScaleAI/PRBench/tree/01947c6ef913df518e6e52626a7b29f132b12d4f), CC-BY-4.0, pinned to revision `01947c6e`.
 - Original harness: [scaleapi/PRBench@7b2df0a](https://github.com/scaleapi/PRBench/tree/7b2df0a28bf99ec51263c41b90dd510a740a7711) `evals.py` (MIT); the original evaluation calls a model API directly, with no agent.
 - Adapted size: 1,100 tasks, every record of the `finance` and `legal` splits. The `finance_hard` (300) and `legal_hard` (250) splits are subsets of those records and are exposed as `--split` choices and a `hard` keyword, not as extra tasks.
 
@@ -141,7 +141,7 @@ Checks without the agent; only the representative-task jobs call a model:
 
 ## Notes & Caveats
 
-**Judge model.** The paper's judge, `o4-mini`, was shut down on the OpenAI API on 2026-10-23 ([deprecations](https://developers.openai.com/api/docs/deprecations)). The default is `gpt-5.6-terra`, the judge of the parity runs and OpenAI's named replacement; the paper did not validate it against human experts. The paper validated `gpt-4.1` too (Cohen's kappa 0.605, against 0.603 for `o4-mini`); OpenAI shuts it down on 2027-01-14. Scores are directly comparable with the paper's only under `o4-mini`; `JUDGE_MODEL` selects it on an endpoint that still serves it, or any other model. `grading.json` records the model name the endpoint reports for every call; in the parity runs that was the undated `gpt-5.6-terra`.
+**Judge model.** The paper's judge, `o4-mini`, was shut down on the OpenAI API on 2026-10-23 ([deprecations](https://developers.openai.com/api/docs/deprecations)). The default is `gpt-5.6-terra`, the judge of the parity runs and OpenAI's named replacement; the paper did not validate it against human experts. The paper validated `gpt-4.1` too (Cohen's kappa 0.605, against 0.603 for `o4-mini`); OpenAI shuts it down on 2027-01-14. It is not the default because the parity endpoint refused it (HTTP 403). Scores are directly comparable with the paper's only under `o4-mini`; `JUDGE_MODEL` selects it on an endpoint that still serves it, or any other model. `grading.json` records the model name the endpoint reports for every call; in the parity runs that was the undated `gpt-5.6-terra`.
 
 **Reward range.** A task score can be negative when negative criteria are met (down to -0.74 on the worst task). The paper floors only the mean over tasks, so the benchmark score is the mean of `score` (the unclipped task score), floored at 0. `reward` floors each task so it stays in [0, 1], and averages slightly higher.
 
@@ -170,10 +170,6 @@ Checks without the agent; only the representative-task jobs call a model:
 - Verifier error with `judge failed after N attempts`: the judge endpoint kept failing or rejected the request; check `OPENAI_BASE_URL`, `JUDGE_MODEL` and the key.
 - `task ids not in split`: `--task-ids` takes generated task ids such as `finance-<task>`, and they must belong to the chosen `--split`.
 
-## Acknowledgement
-
-API inference compute for running parity tests is generously supported by [2077AI](https://www.2077ai.com/) (https://www.2077ai.com/).
-
 ## Citation
 
 ```bibtex
@@ -189,3 +185,7 @@ API inference compute for running parity tests is generously supported by [2077A
 ## Authors & Contributions
 
 Adapter: Qumeng Sun (@Mike-7777777). Issues and questions: open an issue in this repository.
+
+## Acknowledgement
+
+API inference compute for running parity tests is generously supported by [2077AI](https://www.2077ai.com/) (https://www.2077ai.com/).
